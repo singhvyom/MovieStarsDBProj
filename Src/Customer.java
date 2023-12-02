@@ -8,6 +8,7 @@ public class Customer {
     private String password;
     private String username;
     
+    //registering means we might have to create account profiles as well
     public void register(){};
     public void login(){};
 
