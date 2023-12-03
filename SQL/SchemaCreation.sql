@@ -1,3 +1,7 @@
+-- noinspection SqlNoDataSourceInspectionForFile
+
+-- noinspection SqlDialectInspectionForFile
+
 DROP TABLE Customer;
 
 CREATE TABLE Customer
@@ -25,5 +29,31 @@ INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES
 INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES	('Magic Jordon','magic','jo','NJ','(805)4535539','jordon@jordon.org','000003455');
 INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES	('Olive Stoner','olive','st','CA','(805)2574499','olive@yahoo.com','000001123');
 INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES	('Frank Olson','frank','ol','CA','(805)3456789','frank@gmail.com','000003306');
+
+Commit;
+
+DROP TABLE MarketAccount;
+
+CREATE TABLE MarketAccount
+(
+    mkta_id int,
+    username char(20),
+    balance float,
+    PRIMARY KEY (mkta_id),
+    FOREIGN KEY (username) REFERENCES Customer(username),
+    CHECK (balance >= 0)
+);
+
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('alfred',001,10000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('billy',002,100000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('cindy',003,50000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('david',004,45000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('sailor',005,200000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('brush',006,5000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('ivan',007,2000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('joe',008,10000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('magic',009,130200);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('olive',010,35000);
+INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('frank',011,30500);
 
 Commit;
