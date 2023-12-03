@@ -10,7 +10,7 @@ CREATE TABLE Customer
 	username char(20),
 	passwd char(20),
 	PRIMARY KEY (username),
-	CONSTRAINT c_unique_phone UNIQUE (phone),
+	--CONSTRAINT c_unique_phone UNIQUE (phone),
     CONSTRAINT c_unique_email UNIQUE (email)
 );
 
@@ -25,3 +25,5 @@ INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES
 INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES	('Magic Jordon','magic','jo','NJ','(805)4535539','jordon@jordon.org','000003455');
 INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES	('Olive Stoner','olive','st','CA','(805)2574499','olive@yahoo.com','000001123');
 INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES	('Frank Olson','frank','ol','CA','(805)3456789','frank@gmail.com','000003306');
+
+Commit;
