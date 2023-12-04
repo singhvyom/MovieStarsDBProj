@@ -18,9 +18,7 @@ public class CustomerDAOImpl implements CustomerDAO {
     }
     
     @Override
-//    public boolean createCustomer(Connection connection, Customer customer) {
     public boolean createCustomer(Customer customer) {
-
         String query = "INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES (?,?,?,?,?,?,?)";
         try {
             Connection connection = DbConnection.getConnection();
@@ -39,7 +37,6 @@ public class CustomerDAOImpl implements CustomerDAO {
             e.printStackTrace();
             System.out.println(e);
         }
-
         return false;
     }
 
