@@ -22,7 +22,6 @@ public class DbConnection {
         Connection connection;
         try
         {
-            // here
             connection = (OracleConnection) ods.getConnection();
             return connection;
 

@@ -27,6 +27,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+
+import Src.DAO.CustomerDAO;
+import Src.DAOImpl.CustomerDAOImpl;
 import oracle.jdbc.pool.OracleDataSource;
 import oracle.jdbc.OracleConnection;
 import java.sql.DatabaseMetaData;
@@ -39,7 +42,7 @@ public class TestConnection {
 // <DATABASE_NAME_LOWERCASE> is your database name in lowercase
 // and
 // <PATH_TO_WALLET> is the path to the connection wallet on your machine.
-    final static String DB_URL = "jdbc:oracle:thin:@vyomnathandb_tp?TNS_ADMIN=/Users/Vyom/Downloads/Wallet_vyomnathanDB";
+    final static String DB_URL = "jdbc:oracle:thin:@vyomnathandb_tp?TNS_ADMIN=/Users/nathanmathew/Desktop/F23/MovieStarsDBProj/Wallet_vyomnathanDB";
     final static String DB_USER = "ADMIN";
     final static String DB_PASSWORD = "JaysonTatum18";
     // This method creates a database connection using
@@ -71,8 +74,11 @@ public class TestConnection {
             System.out.println("Database username: " + connection.getUserName());
             System.out.println();
             // Perform some database operations
-            insertTA(connection);
-            printInstructors(connection);
+            // insertTA(connection);
+            // printInstructors(connection);
+            CustomerDAO customerDAO = new CustomerDAOImpl();
+            Customer customer = new Customer("Alfred Hitchcock","CA","(805)2574499","a1lfred@hotmail.com","000001022","hi","alfred1");
+            System.out.println(customerDAO.createCustomer(customer));
 
         } catch (Exception e) {
             System.out.println("CONNECTION ERROR:");

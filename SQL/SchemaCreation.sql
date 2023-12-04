@@ -69,12 +69,18 @@ CREATE TABLE ActorProfileStock
     CONSTRAINT c_unique_name UNIQUE (name) -- keep this?
 );
 
+INSERT INTO ActorProfileStock(name, stock_symbol, current_price, closing_price, dob) VALUES	('Alfred Hitchcock','AFH',100,100,'13-DEC-1899');
+INSERT INTO ActorProfileStock(name, stock_symbol, current_price, closing_price, dob) VALUES	('Billy Clinton','BCL',200,200,'14-DEC-1899');
+
 CREATE TABLE Movie
 (
     title varchar2(20),
     year int,
     PRIMARY KEY (title, year)
 );
+
+INSERT INTO Movie(title, year) VALUES	('Psycho',1960);
+INSERT INTO Movie(title, year) VALUES	('The Birds',1963);
 
 CREATE TABLE CONTRACT
 (
@@ -89,6 +95,9 @@ CREATE TABLE CONTRACT
     FOREIGN KEY (stock_symbol) REFERENCES ActorProfileStock(stock_symbol)
 );
 
+INSERT INTO CONTRACT(contract_id, title, year, stock_symbol, actor_role, total_value) VALUES	(001,'Psycho',1960,'AFH','Director',100000);
+INSERT INTO CONTRACT(contract_id, title, year, stock_symbol, actor_role, total_value) VALUES	(002,'The Birds',1963,'BCL','Director',200000);
+
 CREATE TABLE REVIEW
 (
     title varchar2(20),
@@ -98,3 +107,8 @@ CREATE TABLE REVIEW
     FOREIGN KEY (title, year) REFERENCES Movie(title, year),
     CHECK ( rating >= 0 and rating <= 10 )
 );
+
+INSERT INTO REVIEW(title, year, rating, review) VALUES	('Psycho',1960,8,'Great movie!');
+INSERT INTO REVIEW(title, year, rating, review) VALUES	('The Birds',1963,9,'Greater movie!');
+
+Commit;
