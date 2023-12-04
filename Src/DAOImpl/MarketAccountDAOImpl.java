@@ -12,9 +12,9 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
     public static void main(String[] args) {
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
         MarketAccount marketAccount = new MarketAccount("alfred", 1, 1000);
-        // marketAccountDAO.createMarketAccount(marketAccount);
-        marketAccountDAO.deposit("alfred", 100);
-        marketAccountDAO.withdraw("alfred", 50);
+//         marketAccountDAO.createMarketAccount(marketAccount);
+//        marketAccountDAO.deposit("alfred", 100);
+//        marketAccountDAO.withdraw("alfred", 50);
         marketAccountDAO.accrueInterest("alfred");
     }
 
@@ -59,13 +59,12 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
 
     @Override
     public boolean deposit(String username, float amount) {
-//        String query = "UPDATE MarketAccount SET balance = balance + ? WHERE username = ?";
-        String query = "UPDATE MarketAccount SET balance = balance + " + amount + " WHERE username = '" + username + "'";
+        String query = "UPDATE MarketAccount SET balance = balance + ? WHERE username = ?";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-//            statement.setFloat(1, amount);
-//            statement.setString(2, username);
+            statement.setFloat(1, amount);
+            statement.setString(2, username);
             statement.executeUpdate();
             return true;
         } catch (Exception e) {
