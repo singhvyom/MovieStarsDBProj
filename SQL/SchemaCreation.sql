@@ -6,13 +6,13 @@ DROP TABLE Customer;
 
 CREATE TABLE Customer
 (
-	name char(20),
-	state char(2),
-	phone char(15),
-	email char(30),
-	tax_id char(9),
-	username char(20),
-	passwd char(20),
+	name varchar2(20),
+	state varchar2(2),
+	phone varchar2(15),
+	email varchar2(30),
+	tax_id varchar2(9),
+	username varchar2(20),
+	passwd varchar2(20),
 	PRIMARY KEY (username),
 	--CONSTRAINT c_unique_phone UNIQUE (phone),
     CONSTRAINT c_unique_email UNIQUE (email)
@@ -37,7 +37,7 @@ DROP TABLE MarketAccount;
 CREATE TABLE MarketAccount
 (
     mkta_id int,
-    username char(20),
+    username varchar2(20),
     balance float,
     PRIMARY KEY (mkta_id),
     FOREIGN KEY (username) REFERENCES Customer(username),
@@ -57,3 +57,44 @@ INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('olive',010,35000)
 INSERT INTO MarketAccount(username, mkta_id, balance) VALUES	('frank',011,30500);
 
 Commit;
+
+CREATE TABLE ActorProfileStock
+(
+    name varchar2(20),
+    stock_symbol varchar2(3),
+    current_price float,
+    closing_price float,
+    dob date,
+    PRIMARY KEY (stock_symbol),
+    CONSTRAINT c_unique_name UNIQUE (name) -- keep this?
+);
+
+CREATE TABLE Movie
+(
+    title varchar2(20),
+    year int,
+    PRIMARY KEY (title, year)
+);
+
+CREATE TABLE CONTRACT
+(
+    contract_id int,
+    title varchar2(20),
+    year int,
+    stock_symbol varchar2(3),
+    actor_role varchar2(10),
+    total_value float,
+    PRIMARY KEY (contract_id),
+    FOREIGN KEY (title, year) REFERENCES Movie(title, year),
+    FOREIGN KEY (stock_symbol) REFERENCES ActorProfileStock(stock_symbol)
+);
+
+CREATE TABLE REVIEW
+(
+    title varchar2(20),
+    year int,
+    rating float,
+    review varchar2(100),
+    FOREIGN KEY (title, year) REFERENCES Movie(title, year),
+    CHECK ( rating >= 0 and rating <= 10 )
+);
