@@ -2,7 +2,7 @@ package Src.DAO;
 
 import Src.Customer;
 
-import java.sql.Connection;
+//import java.sql.Connection;
 
 public interface CustomerDAO {
     public boolean createCustomer(Customer customer);
