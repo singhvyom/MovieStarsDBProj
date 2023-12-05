@@ -82,7 +82,8 @@ CREATE TABLE Movie
 INSERT INTO Movie(title, year) VALUES	('Psycho',1960);
 INSERT INTO Movie(title, year) VALUES	('The Birds',1963);
 
-CREATE TABLE CONTRACT
+--DROP TABLE Contract;
+CREATE TABLE Contract
 (
     contract_id int,
     title varchar2(20),
@@ -95,10 +96,11 @@ CREATE TABLE CONTRACT
     FOREIGN KEY (stock_symbol) REFERENCES ActorProfileStock(stock_symbol)
 );
 
-INSERT INTO CONTRACT(contract_id, title, year, stock_symbol, actor_role, total_value) VALUES	(001,'Psycho',1960,'AFH','Director',100000);
-INSERT INTO CONTRACT(contract_id, title, year, stock_symbol, actor_role, total_value) VALUES	(002,'The Birds',1963,'BCL','Director',200000);
+INSERT INTO Contract(contract_id, title, year, stock_symbol, actor_role, total_value)VALUES (001, 'Psycho', 1960, 'AFH', 'Director', 100000);
+INSERT INTO Contract(contract_id, title, year, stock_symbol, actor_role, total_value)VALUES (002, 'The Birds', 1963, 'BCL', 'Director', 200000);
 
-CREATE TABLE REVIEW
+--DROP TABLE Review;
+CREATE TABLE Review
 (
     title varchar2(20),
     year int,
@@ -108,7 +110,52 @@ CREATE TABLE REVIEW
     CHECK ( rating >= 0 and rating <= 10 )
 );
 
-INSERT INTO REVIEW(title, year, rating, review) VALUES	('Psycho',1960,8,'Great movie!');
-INSERT INTO REVIEW(title, year, rating, review) VALUES	('The Birds',1963,9,'Greater movie!');
+INSERT INTO Review(title, year, rating, review) VALUES	('Psycho',1960,8,'Great movie!');
+INSERT INTO Review(title, year, rating, review) VALUES	('The Birds',1963,9,'Greater movie!');
+
+Commit;
+
+--DROP TABLE StockAccount;
+CREATE TABLE StockAccount
+(
+    stock varchar2(3),
+    mkta_id int,
+    shares_owned float,
+    PRIMARY KEY (stock, mkta_id),
+    FOREIGN KEY (stock) REFERENCES ActorProfileStock(stock_symbol),
+    FOREIGN KEY (mkta_id) REFERENCES MarketAccount(mkta_id)
+);
+
+INSERT INTO StockAccount(stock, mkta_id, shares_owned)VALUES ('AFH', 001, 100);
+
+--DROP TABLE MarketAccountTransaction;
+CREATE TABLE MarketAccountTransaction
+(
+    transaction_id int,
+    mkta_id int,
+    amount float,
+    type varchar2(10),
+    transaction_date date,
+    PRIMARY KEY (transaction_id),
+    FOREIGN KEY (mkta_id) REFERENCES MarketAccount(mkta_id)
+);
+
+INSERT INTO MarketAccountTransaction(transaction_id, mkta_id, amount, type, transaction_date)VALUES (001, 001, 100, 'BUY', '01-JAN-2018');
+
+--DROP TABLE StockAccountTransaction;
+CREATE TABLE StockAccountTransaction
+(
+    transaction_id int,
+    stock varchar2(3),
+    mkta_id int,
+    shares float,
+    type varchar2(10),
+    transaction_date date,
+    profit float,
+    PRIMARY KEY (transaction_id),
+    FOREIGN KEY (stock, mkta_id) REFERENCES StockAccount(stock, mkta_id)
+);
+
+INSERT INTO StockAccountTransaction(transaction_id, stock, mkta_id, shares, type, transaction_date, profit)VALUES (001, 'AFH', 001, 100, 'BUY', '01-JAN-2018', 0);
 
 Commit;

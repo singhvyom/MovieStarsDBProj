@@ -55,11 +55,10 @@ public class MovieDAOImpl implements MovieDAO {
     }
 
     public ArrayList<String> getDirectorsForMovie(Movie movie) {
-        // Is it 'both' or 'Both'?
         String query = "SELECT aps.name\n" +
                 "FROM CONTRACT c\n" +
                 "JOIN ActorProfileStock aps ON c.stock_symbol = aps.stock_symbol\n" +
-                "WHERE c.title = ? AND c.year = ? AND c.actor_role IN ('Director', 'both')";
+                "WHERE c.title = ? AND c.year = ? AND c.actor_role IN ('Director', 'both', 'Both')";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -147,7 +146,6 @@ public class MovieDAOImpl implements MovieDAO {
             System.out.println("ERROR: getTopMoviesInTimeInterval failed.");
             System.out.println(e);
         }
-
         return new ArrayList<>();
     }
 }
