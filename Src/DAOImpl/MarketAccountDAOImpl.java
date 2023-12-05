@@ -12,10 +12,10 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
     public static void main(String[] args) {
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
         MarketAccount marketAccount = new MarketAccount("alfred", 1, 1000);
-        // marketAccountDAO.createMarketAccount(marketAccount);
-        marketAccountDAO.deposit("alfred", 100);
-        marketAccountDAO.withdraw("alfred", 50);
-        marketAccountDAO.accrueInterest("alfred");
+//         marketAccountDAO.createMarketAccount(marketAccount);
+        marketAccountDAO.updateBalance("alfred", 100);
+//        marketAccountDAO.withdraw("alfred", 50);
+//        marketAccountDAO.accrueInterest("alfred");
     }
 
     @Override
@@ -58,27 +58,8 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
     }
 
     @Override
-    public boolean deposit(String username, float amount) {
-//        String query = "UPDATE MarketAccount SET balance = balance + ? WHERE username = ?";
-        String query = "UPDATE MarketAccount SET balance = balance + " + amount + " WHERE username = '" + username + "'";
-        try {
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-//            statement.setFloat(1, amount);
-//            statement.setString(2, username);
-            statement.executeUpdate();
-            return true;
-        } catch (Exception e) {
-            System.out.println("ERROR: deposit failed.");
-            e.printStackTrace();
-            System.out.println(e);
-        }
-        return false;
-    }
-
-    @Override
-    public boolean withdraw(String username, float amount) {
-        String query = "UPDATE MarketAccount SET balance = balance - ? WHERE username = ?";
+    public boolean updateBalance(String username, float amount) {
+        String query = "UPDATE MarketAccount SET balance = balance + ? WHERE username = ?";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -87,7 +68,7 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
             statement.executeUpdate();
             return true;
         } catch (Exception e) {
-            System.out.println("ERROR: withdrawal failed.");
+            System.out.println("ERROR: deposit failed.");
             e.printStackTrace();
             System.out.println(e);
         }
