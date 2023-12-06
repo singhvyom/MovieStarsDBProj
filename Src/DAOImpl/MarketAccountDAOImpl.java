@@ -13,7 +13,7 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
         MarketAccount marketAccount = new MarketAccount("alfred", 1, 1000);
 //         marketAccountDAO.createMarketAccount(marketAccount);
-        marketAccountDAO.updateBalance("alfred", 100);
+        marketAccountDAO.updateBalance("alfred", -200);
 //        marketAccountDAO.withdraw("alfred", 50);
 //        marketAccountDAO.accrueInterest("alfred");
     }

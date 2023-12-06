@@ -131,7 +131,7 @@ INSERT INTO StockAccount(stock, mkta_id, shares_owned)VALUES ('AFH', 001, 100);
 --DROP TABLE MarketAccountTransaction;
 CREATE TABLE MarketAccountTransaction
 (
-    transaction_id int,
+    transaction_id int GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) NOT NULL,
     mkta_id int,
     amount float,
     type varchar2(10),
@@ -140,12 +140,12 @@ CREATE TABLE MarketAccountTransaction
     FOREIGN KEY (mkta_id) REFERENCES MarketAccount(mkta_id)
 );
 
-INSERT INTO MarketAccountTransaction(transaction_id, mkta_id, amount, type, transaction_date)VALUES (001, 001, 100, 'BUY', '01-JAN-2018');
+INSERT INTO MarketAccountTransaction(mkta_id, amount, type, transaction_date)VALUES (001, 100, 'BUY', '01-JAN-2018');
 
 --DROP TABLE StockAccountTransaction;
 CREATE TABLE StockAccountTransaction
 (
-    transaction_id int,
+    transaction_id int GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) NOT NULL,
     stock varchar2(3),
     mkta_id int,
     shares float,
@@ -156,6 +156,6 @@ CREATE TABLE StockAccountTransaction
     FOREIGN KEY (stock, mkta_id) REFERENCES StockAccount(stock, mkta_id)
 );
 
-INSERT INTO StockAccountTransaction(transaction_id, stock, mkta_id, shares, type, transaction_date, profit)VALUES (001, 'AFH', 001, 100, 'BUY', '01-JAN-2018', 0);
+INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_date, profit)VALUES ('AFH', 001, 100, 'BUY', '01-JAN-2018', 0);
 
 Commit;
