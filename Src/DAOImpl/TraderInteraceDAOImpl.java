@@ -69,10 +69,12 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
 
     public void deposit(double amount){
         // TODO Deposit the given amount into the market account
+        String query = "UPDATE MarketAccount SET balance = balance + ? WHERE username = ?";
     }
 
     public void withdrawal(double amount){
         // TODO Withdraw the given amount from the market account
+        String query = "UPDATE MarketAccount SET balance = balance - ? WHERE username = ?";
     }
 
     public void buy(String stockSymbol, int quantity){
@@ -86,35 +88,169 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
 
     public void cancel(String transactionId){
         // TODO Cancel the given transaction
+        String query = "DELETE FROM Transaction WHERE transactionId = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, transactionId);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                System.out.println("Transaction cancelled successfully!");
+            }
+            else{
+                System.out.println("Transaction cancellation failed.");
+            }
+        }
+        catch(SQLException e){
+            System.out.println(e);
+        }
     }
 
     public double showMarketAccountBalance(){
         // TODO Return the current balance of the market account
+        String query = "SELECT balance FROM MarketAccount WHERE username = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, "username");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                return resultSet.getDouble("balance");
+            }
+            else{
+                System.out.println("Market account not found.");
+            }
+        }
+        catch(SQLException e){
+            System.out.println(e);
+        }
         return 0.0;
     }
 
     public void showTransactionHistory(){
+        //would show the entire list of transactions for stock account
+        //change this query, can't access transactions for a customer like this
+        String query = "SELECT * FROM StockAccountTransaction WHERE username = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, "username");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                System.out.println("Transaction ID: " + resultSet.getString("transactionId"));
+                System.out.println("Username: " + resultSet.getString("username"));
+                System.out.println("Stock Symbol: " + resultSet.getString("stock_symbol"));
+                System.out.println("Quantity: " + resultSet.getInt("quantity"));
+                System.out.println("Price: " + resultSet.getDouble("price"));
+                System.out.println("Type: " + resultSet.getString("type"));
+                System.out.println("Timestamp: " + resultSet.getTimestamp("timestamp"));
+            }
+            else{
+                System.out.println("Transaction history not found.");
+            }
+        }
+        catch(SQLException e){
+            System.out.println(e);
+        }
         
     }
 
     public double getCurrentStockPrice(String stockSymbol){
         // TODO Return the current price of the given stock
+        String query = "SELECT price FROM Stock WHERE stockSymbol = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, stockSymbol);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                return resultSet.getDouble("price");
+            }
+            else{
+                System.out.println("Stock not found.");
+            }
+        }
+        catch(SQLException e){
+            System.out.println(e);
+        }
         return 0.0;
     }
 
     public void showActorProfile(String actorName){
         // TODO Show the profile of the given actor
+        //shows current price of their stock and their name, dob, and stock symbol
+        String query = "SELECT * FROM Actor WHERE name = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, actorName);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                System.out.println("Name: " + resultSet.getString("name"));
+                System.out.println("DOB: " + resultSet.getDate("dob"));
+                System.out.println("Stock Symbol: " + resultSet.getString("stock_symbol"));
+                System.out.println("Current Stock Price: " + resultSet.getFloat("current_price"));
+            }
+            else{
+                System.out.println("Actor not found.");
+            }
+        }
+        catch(SQLException e){
+            System.out.println(e);
+        }
     }
 
     public void showMovieInformation(String movieTitle){
         // TODO Show information about the given movie
+        ///then ask if they wanna see the top movies and if they want to display movie reviews
+        String query = "SELECT * FROM Movie WHERE title = ?";
+        //if we want to display other info like the actors?
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, movieTitle);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                System.out.println("Title: " + resultSet.getString("title"));
+                System.out.println("Year: " + resultSet.getInt("year"));
+            }
+            else{
+                System.out.println("Movie not found.");
+            }
+        }
+        catch(SQLException e){
+            System.out.println(e);
+        }
+
+        System.out.println("Would you like to see the top movies?");
+        System.out.println("1. Yes");
+        System.out.println("2. No");
+        Scanner scanner = new Scanner(System.in);
+        int choice = scanner.nextInt();
+        if(choice == 1){
+            //display the top movies
+        }
+        else if(choice == 2){
+            //do nothing
+        }
+        System.out.println("Would you like to see movie reviews for a movie?");
+        System.out.println("1. Yes");
+        System.out.println("2. No");
+        int choice2 = scanner.nextInt();
+        if(choice2 == 1){
+            //display movie reviews
+        }
+        else if(choice2 == 2){
+            //do nothing
+        }
+        scanner.close();
     }
 
-    public void listTopMovies(int startYear, int endYear){
+    private void listTopMovies(int startYear, int endYear){
         // TODO List the top movies within the given year range
     }
 
-    public void displayMovieReviews(String movieTitle){
+    private void displayMovieReviews(String movieTitle){
         // TODO Display reviews for the given movie
     }
 
@@ -155,6 +291,8 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         }
         
         scanner.close();
+        //get the customer so we can access them anywhere
+    
         Scanner scanner2 = new Scanner(System.in);
         System.out.println("What would you like to do?");
         System.out.println("1. Deposit");

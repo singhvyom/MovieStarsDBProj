@@ -16,7 +16,7 @@ public interface TraderInterfaceDAO {
     public void showMovieInformation(String movieTitle);
     //these bottom two functions should be implemented in show movie information i think, 
     //since its available by request
-    public void listTopMovies(int startYear, int endYear);
-    public void displayMovieReviews(String movieTitle);
+    private void listTopMovies(int startYear, int endYear);
+    private void displayMovieReviews(String movieTitle);
     
 }
