@@ -2,7 +2,7 @@ package Src.DAO;
 
 public interface TraderInterfaceDAO {
     //implementation in TraderInterfaceImpl.java
-    public void registerCustomer(String username, String password);
+    public void registerCustomer();
     public boolean login(String username, String password);
     public void deposit(double amount);
     public void withdrawal(double amount);
