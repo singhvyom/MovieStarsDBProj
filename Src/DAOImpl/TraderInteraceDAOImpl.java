@@ -10,6 +10,17 @@ import Src.Customer;
 import Src.DAO.CustomerDAO;
 import Src.DbConnection;
 import Src.DAO.TraderInterfaceDAO;
+import Src.DAO.MarketAccountDAO;
+import Src.DAOImpl.MarketAccountDAOImpl;
+import Src.DAO.MarketAccountTransactionDAO;
+import Src.DAOImpl.MarketAccountTransactionDAOImpl;
+import Src.DAO.ActorProfileStockDAO;
+import Src.DAOImpl.ActorProfileStockDAOImpl;
+import Src.ActorProfileStock;
+import Src.DAO.MovieDAO;
+import Src.DAOImpl.MovieDAOImpl;
+import Src.Movie;
+import java.util.ArrayList;
 
 public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
     //implement functions in TraderInterfaceDAO
@@ -80,173 +91,111 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         // TODO Sell the given quantity of the given stock
     }
 
-    public void cancel(String transactionId){
+    public void cancel(int transactionId){
         // TODO Cancel the given transaction
-        String query = "DELETE FROM Transaction WHERE transactionId = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, transactionId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
-                System.out.println("Transaction cancelled successfully!");
-            }
-            else{
-                System.out.println("Transaction cancellation failed.");
-            }
+        MarketAccountTransactionDAO marketAccountTransaction = new MarketAccountTransactionDAOImpl();
+        boolean cancel = marketAccountTransaction.cancelMarketAccountTransaction(transactionId);
+        if(cancel){
+            System.out.println("Transaction cancelled.");
         }
-        catch(SQLException e){
-            System.out.println(e);
+        else{
+            System.out.println("Transaction not found.");
         }
+        
     }
 
-    public double showMarketAccountBalance(){
+    public void showMarketAccountBalance(){
         // TODO Return the current balance of the market account
-        String query = "SELECT balance FROM MarketAccount WHERE username = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, "username");
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
-                return resultSet.getDouble("balance");
-            }
-            else{
-                System.out.println("Market account not found.");
-            }
-        }
-        catch(SQLException e){
-            System.out.println(e);
-        }
-        return 0.0;
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        //need show balance function for the market account?
     }
 
     public void showTransactionHistory(){
         //would show the entire list of transactions for stock account
         //change this query, can't access transactions for a customer like this
-        String query = "SELECT * FROM StockAccountTransaction WHERE username = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, "username");
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
-                System.out.println("Transaction ID: " + resultSet.getString("transactionId"));
-                System.out.println("Username: " + resultSet.getString("username"));
-                System.out.println("Stock Symbol: " + resultSet.getString("stock_symbol"));
-                System.out.println("Quantity: " + resultSet.getInt("quantity"));
-                System.out.println("Price: " + resultSet.getDouble("price"));
-                System.out.println("Type: " + resultSet.getString("type"));
-                System.out.println("Timestamp: " + resultSet.getTimestamp("timestamp"));
-            }
-            else{
-                System.out.println("Transaction history not found.");
-            }
-        }
-        catch(SQLException e){
-            System.out.println(e);
-        }
+        
         
     }
 
-    public double getCurrentStockPrice(String stockSymbol){
+    public void getCurrentStockPrice(String stockSymbol){
         // TODO Return the current price of the given stock
-        String query = "SELECT price FROM Stock WHERE stockSymbol = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, stockSymbol);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
-                return resultSet.getDouble("price");
-            }
-            else{
-                System.out.println("Stock not found.");
-            }
+        ActorProfileStockDAO actorProfileStockDAO = new ActorProfileStockDAOImpl();
+        ActorProfileStock actorProfileStock = actorProfileStockDAO.getActorProfileStock(stockSymbol);
+        if(actorProfileStock == null){
+            System.out.println("Stock not found.");
         }
-        catch(SQLException e){
-            System.out.println(e);
+        else{
+            System.out.println("The current price of " + stockSymbol + " is: " + actorProfileStock.getCurrentPrice());
         }
-        return 0.0;
+
     }
 
     public void showActorProfile(String actorName){
         // TODO Show the profile of the given actor
+        //should this be asking for the stock symbol instead?
+        //currently implemented as if it was a stock symbol
         //shows current price of their stock and their name, dob, and stock symbol
-        String query = "SELECT * FROM Actor WHERE name = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, actorName);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
-                System.out.println("Name: " + resultSet.getString("name"));
-                System.out.println("DOB: " + resultSet.getDate("dob"));
-                System.out.println("Stock Symbol: " + resultSet.getString("stock_symbol"));
-                System.out.println("Current Stock Price: " + resultSet.getFloat("current_price"));
-            }
-            else{
-                System.out.println("Actor not found.");
-            }
+        ActorProfileStockDAO actorProfileStockDAO = new ActorProfileStockDAOImpl();
+        ActorProfileStock actorProfileStock = actorProfileStockDAO.getActorProfileStock(actorName); 
+        if(actorProfileStock == null){
+            System.out.println("Actor not found.");
         }
-        catch(SQLException e){
-            System.out.println(e);
+        else{
+            actorProfileStock.toString();
         }
+        
     }
 
-    public void showMovieInformation(String movieTitle){
+    public void showMovieInformation(String movieTitle, int year){
         // TODO Show information about the given movie
         ///then ask if they wanna see the top movies and if they want to display movie reviews
-        String query = "SELECT * FROM Movie WHERE title = ?";
-        //if we want to display other info like the actors?
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, movieTitle);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
-                System.out.println("Title: " + resultSet.getString("title"));
-                System.out.println("Year: " + resultSet.getInt("year"));
-            }
-            else{
-                System.out.println("Movie not found.");
-            }
+        MovieDAO movieDAO = new MovieDAOImpl();
+        Movie movie = new Movie(movieTitle, year);
+        ArrayList<String> actors = movieDAO.getActorsForMovie(movie);
+        ArrayList<String> directors = movieDAO.getDirectorsForMovie(movie);
+        float rating = movieDAO.getMovieRating(movie);
+        System.out.println(movieTitle);
+        System.out.println(year);
+        System.out.println("Rating: " + rating);   
+        System.out.print("Actors: ");
+        for(String actor : actors){
+            System.out.print(actor + ", ");
         }
-        catch(SQLException e){
-            System.out.println(e);
+        System.out.println();
+        System.out.print("Directors: ");
+        for(String director : directors){
+            System.out.print(director + ", ");
         }
-
-        System.out.println("Would you like to see the top movies?");
-        System.out.println("1. Yes");
-        System.out.println("2. No");
+        System.out.println();
+        
+        System.out.println("Would you like to see the top movies in this time interval? (y/n)");
         Scanner scanner = new Scanner(System.in);
-        int choice = scanner.nextInt();
-        if(choice == 1){
-            //display the top movies
+        String choice = scanner.nextLine();
+        if(choice.equals("y")){
+            System.out.println("What year range would you like to see the top movies of?");
+            System.out.println("Start year: ");
+            int startYear = scanner.nextInt();
+            System.out.println("End year: ");
+            int endYear = scanner.nextInt();
+            ArrayList<Movie> movies = movieDAO.getTopMoviesInTimeInterval(startYear, endYear);
+            for(Movie m : movies) {
+                System.out.println(m.getTitle());
+            }
         }
-        else if(choice == 2){
-            //do nothing
+        System.out.println("Would you like to see the reviews for this movie? (y/n)");
+        String choice2 = scanner.nextLine();
+        if(choice2.equals("y")){
+            ArrayList<String> reviews = movieDAO.getAllMovieReviews(movie);
+            for(String review : reviews) {
+                System.out.println(review);
+            }
         }
-        System.out.println("Would you like to see movie reviews for a movie?");
-        System.out.println("1. Yes");
-        System.out.println("2. No");
-        int choice2 = scanner.nextInt();
-        if(choice2 == 1){
-            //display movie reviews
-        }
-        else if(choice2 == 2){
-            //do nothing
-        }
+
         scanner.close();
+
+
     }
 
-    private void listTopMovies(int startYear, int endYear){
-        // TODO List the top movies within the given year range
-    }
-
-    private void displayMovieReviews(String movieTitle){
-        // TODO Display reviews for the given movie
-    }
 
     public void main(String[] args) {
         // TODO Prompt user to make choices and call the appropriate functions
@@ -274,8 +223,8 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         }
         
         scanner.close();
-        //get the customer so we can access them anywhere
-    
+        //get the customer and relevant info so we can access them anywhere
+        //need to get the customer's username, mkta_id
         Scanner scanner2 = new Scanner(System.in);
         System.out.println("What would you like to do?");
         System.out.println("1. Deposit");
@@ -288,11 +237,10 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         System.out.println("8. Get Current Stock Price");
         System.out.println("9. Show Actor Profile");
         System.out.println("10. Show Movie Information");
-        System.out.println("11. List Top Movies");
-        System.out.println("12.Exit");
+        System.out.println("11.Exit");
         int choice = scanner2.nextInt();
 
-        while(choice != 12){
+        while(choice != 11){
             switch(choice){
                 case 1:
                     System.out.println("How much would you like to deposit?");
@@ -319,12 +267,12 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
                     sell(stockSymbol2, quantity2);
                     break;
                 case 5:
-                    System.out.println("What transaction would you like to cancel?");
-                    String transactionId = scanner2.nextLine();
+                    System.out.println("What transaction would you like to cancel? Enter id: ");
+                    int transactionId = scanner2.nextInt();
                     cancel(transactionId);
                     break;
                 case 6:
-                    System.out.println("Your current market account balance is: " + showMarketAccountBalance());
+                    showMarketAccountBalance();
                     break;
                 case 7:
                     showTransactionHistory();
@@ -332,7 +280,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
                 case 8:
                     System.out.println("What stock would you like to get the current price of?");
                     String stockSymbol3 = scanner2.nextLine();
-                    System.out.println("The current price of " + stockSymbol3 + " is: " + getCurrentStockPrice(stockSymbol3));
+                    getCurrentStockPrice(stockSymbol3);
                     break;
                 case 9:
                     System.out.println("What actor would you like to see the profile of?");
@@ -342,15 +290,9 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
                 case 10:
                     System.out.println("What movie would you like to see information about?");
                     String movieTitle = scanner2.nextLine();
-                    showMovieInformation(movieTitle);
-                    break;
-                case 11:
-                    System.out.println("What year range would you like to see the top movies of?");
-                    System.out.println("Start year: ");
-                    int startYear = scanner2.nextInt();
-                    System.out.println("End year: ");
-                    int endYear = scanner2.nextInt();
-                    listTopMovies(startYear, endYear);
+                    System.out.println("What year was the movie released?");
+                    int year = scanner2.nextInt();
+                    showMovieInformation(movieTitle, year);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
