@@ -13,7 +13,7 @@ import Src.DAO.TraderInterfaceDAO;
 
 public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
     //implement functions in TraderInterfaceDAO
-    public void registerCustomer(){
+    public Customer registerCustomer(){
         // TODO Create a new customer in the database
         Scanner scanner = new Scanner(System.in);
         System.out.println("Please enter your name: ");
@@ -32,39 +32,33 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         System.out.println("Please create your username: ");
         String username = scanner.nextLine();
         Customer customer = new Customer(name, state, phoneNum, email, taxID, password, username);
-        CustomerDAO customerDAO = new CustomerDAOImpl();
-        
-        boolean cust = customerDAO.createCustomer(customer);
-        if(cust){
-            System.out.println("Customer created successfully!");
-        }
-        else{
-            System.out.println("Customer creation failed.");
-        }
         scanner.close();
+        return customer;
+        
     };
 
-    public boolean login(String username, String password){
-        // TODO Check if the username and password match any of them in the database
-        //if they do, return true
-        String  query = "SELECT * FROM Customer WHERE username = ? AND password = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, username);
-            preparedStatement.setString(2, password);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if(resultSet.next()){
-                return true;
-            }
-            else{
-                return false;
+    public void login(CustomerDAO customerDAO) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Please enter your username: ");
+        String username = scanner.nextLine();
+        System.out.println("Please enter your password: ");
+        String password = scanner.nextLine();
+        String customerName = customerDAO.login(username, password);
+        if (customerName == null) {
+            while (true) {
+                System.out.println("Login failed. Please try again.");
+                System.out.println("Please enter your username: ");
+                username = scanner.nextLine();
+                System.out.println("Please enter your password: ");
+                password = scanner.nextLine();
+                customerName = customerDAO.login(username, password);
+                if (customerName != null) {
+                    break;
+                }
             }
         }
-        catch(SQLException e){
-            System.out.println(e);
-        }
-        return false;
+        scanner.close();
+        System.out.println("Welcome " + customerName + "!");
     }
 
     public void deposit(double amount){
@@ -257,6 +251,8 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
     public void main(String[] args) {
         // TODO Prompt user to make choices and call the appropriate functions
         Scanner scanner = new Scanner(System.in);
+        CustomerDAO customerDAO = new CustomerDAOImpl();
+
         System.out.println("Welcome to the Trader Interface!");
         System.out.println("If you are a new user, please register.");
         System.out.println("Type 1 to register, or 2 to login.");
@@ -268,26 +264,13 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         }
         if(newUser ==1){
             //register a new user
-            //log them in too
-            //prompts in registerCustomer()
-            registerCustomer();
+            Customer customer = registerCustomer();
+            customerDAO.createCustomer(customer);
 
         }
         else if(newUser == 2){
-            System.out.println("Please enter your username: ");
-            String username = scanner.nextLine();   
-
-            while(true){
-                System.out.println("Please enter your password: "); 
-                String password = scanner.nextLine();   
-                if(login(username, password)){
-                    System.out.println("Login successful!");
-                    break;
-                }
-                else{
-                    System.out.println("Login failed. Try again.");
-                }
-            }
+            //login 
+            login(customerDAO);
         }
         
         scanner.close();

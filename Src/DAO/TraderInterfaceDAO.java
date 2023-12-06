@@ -1,9 +1,10 @@
 package Src.DAO;
-
+import Src.Customer;
+import Src.DAOImpl.CustomerDAOImpl;
 public interface TraderInterfaceDAO {
     //implementation in TraderInterfaceImpl.java
-    public void registerCustomer();
-    public boolean login(String username, String password);
+    public Customer registerCustomer();
+    public void login(CustomerDAO customerDAO);
     public void deposit(double amount);
     public void withdrawal(double amount);
     public void buy(String stockSymbol, int quantity);
