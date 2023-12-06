@@ -19,7 +19,7 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
     }
 
     @Override
-    public boolean addTransaction(StockAccountTransaction stockAccountTransaction) {
+    public boolean createStockAccountTransaction(StockAccountTransaction stockAccountTransaction) {
         String query = "INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_date, profit)VALUES (?, ?, ?, ?, ?, ?)";
         try {
             Connection connection = DbConnection.getConnection();
