@@ -48,7 +48,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println("ERROR: cannot add interest until the last day of the month.");
             return;
         }
-        String query = "UPDATE Market_Accounts SET balance = balance * (1 + ?)";
+        String query = "UPDATE MarketAccount SET balance = balance * (1 + ?)";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -71,6 +71,50 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         // The initial and final account balance is to be included, so are the total earning/loss (including interest)
         // this month and the total amount of commissions paid.
         // The statement will be displayed in your interface.
+        System.out.println("Customer Name: " + customer.getName());
+        System.out.println("Customer Email: " + customer.getEmail());
+        try{
+            Connection connection = DbConnection.getConnection();
+
+            //first get the market account
+            String marketAccQuery = "SELECT * FROM MarketAccount WHERE username = ?";
+            PreparedStatement marketAccStatement = connection.prepareStatement(marketAccQuery);
+            marketAccStatement.setString(1, customer.getUsername());
+            ResultSet marketAccResultSet = marketAccStatement.executeQuery();
+
+            while(marketAccResultSet.next()){
+                int mktaID = marketAccResultSet.getInt("mkta_id");
+                //now get the transactions for this month
+                Calendar calendar = Calendar.getInstance();
+                int currentMonth = calendar.get(Calendar.MONTH);
+                int currentYear = calendar.get(Calendar.YEAR);
+                String transactionQuery = "SELECT * FROM MarketAccountTransaction WHERE mkta_id = ? AND MONTH(transaction_date) = MONTH(CURDATE())";
+                PreparedStatement transactionStatement = connection.prepareStatement(transactionQuery);
+                transactionStatement.setInt(1, mktaID);
+                ResultSet transactionResultSet = transactionStatement.executeQuery();
+                while(transactionResultSet.next()){
+                    System.out.println("Transaction ID: " + transactionResultSet.getInt("transaction_id"));
+                    System.out.println("Transaction Date: " + transactionResultSet.getDate("transaction_date"));
+                    System.out.println("Amount: " + transactionResultSet.getFloat("amount"));
+                    System.out.println("--------------------");
+                }
+                //Calculate initial and final acccount balance current calc prob not correct
+                System.out.println("Initial Account Balance: " + marketAccResultSet.getFloat("balance"));
+                System.out.println("Final Account Balance: " + marketAccResultSet.getFloat("balance") + marketAccResultSet.getFloat("balance") * (1 + marketAccResultSet.getFloat("interest_rate")));
+                
+            }
+            if(!marketAccResultSet.next()){
+                System.out.println("No market account found for this customer.");
+            }
+            //need to do same for stock accounts, can be found with the same mkta_id. 
+            //if market account is not found, then no stock accounts will be found either
+
+        }catch(Exception e){
+            System.out.println("ERROR: generating monthly statement failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+
 
     }
     
@@ -116,7 +160,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     public void customerReport(Customer customer){
         //TODO:Generate a list of all accounts associated with a particular customer and the current balance
         //query the db for all accounts associated with a particular customer and the current balance
-        String query = "SELECT * FROM Accounts WHERE username = ?";
+        String query = "SELECT * FROM MarketAccount WHERE username = ?";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -127,9 +171,22 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
 
             while(resultSet.next()){
                 System.out.println("Customer Name: " + resultSet.getString("name"));
-                System.out.println("Account Type: " + resultSet.getString("account_type"));
+                System.out.println("Account Type: Market Account");
                 System.out.println("Balance: " + resultSet.getString("balance"));
                 System.out.println("--------------------");
+                //we can get the stock account if it exists with the same mkta_id
+                String stockAccQuery = "SELECT * FROM StockAccount WHERE mkta_id = ?";
+                PreparedStatement stockAccStatement = connection.prepareStatement(stockAccQuery);
+                stockAccStatement.setInt(1, resultSet.getInt("mkta_id"));
+                ResultSet stockAccResultSet = stockAccStatement.executeQuery();
+                while(stockAccResultSet.next()){
+                    System.out.println("Account Type: Stock Account");
+                    System.out.println("Balance: " + resultSet.getString("balance"));
+                    System.out.println("--------------------");
+                }
+                if(!stockAccResultSet.next()){
+                    System.out.println("No stock account found for this customer.");
+                }
             }
             if(!resultSet.next()){
                 System.out.println("No accounts associated with this customer found.");
@@ -144,8 +201,26 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     public void deleteTransactions(){
         //TODO: Delete the list of transactions from each of the accounts, in preparation for a new month of processing.
         //should just be deleting every transaction 
+
+        String query = "DELETE FROM MarketAccountTransaction";
+
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.executeUpdate();
+            int rowsAffected = statement.executeUpdate();
+            if(rowsAffected == 0){
+                System.out.println("No transactions to delete.");
+            }else{
+                System.out.println("All transactions have been deleted.");
+            }
+        }catch(Exception e){
+            System.out.println("ERROR: deleting transactions failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
         
-        System.out.println("All transactions have been deleted.");
+      
     }
 
     public void generateDTER(){
