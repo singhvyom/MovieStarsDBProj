@@ -25,7 +25,20 @@ public class SysInfoDAOImpl implements SysInfoDAO {
     }
 
     @Override
-    public boolean openMarket() {
+    public boolean openMarket(String newDate) {
+        String query = "UPDATE SysInfo SET is_open = 0 SET market_date = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setDate(1, java.sql.Date.valueOf(newDate));
+            statement.executeUpdate();
+            System.out.println("Market has been opened.");
+            return true;
+        }catch(Exception e){
+            System.out.println("ERROR: opening market failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
         return false;
     }
 

@@ -12,6 +12,8 @@ import Src.DbConnection;
 import Src.ActorProfileStock;
 import Src.DAO.ActorProfileStockDAO;
 import Src.DAOImpl.ActorProfileStockDAOImpl;
+import Src.DAO.SysInfoDAO;
+import Src.DAOImpl.SysInfoDAOImpl;
 
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
@@ -269,24 +271,20 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         //what does this mean
         //per piazza can merge with set currrent date
         // open market on date. set is_open to true, set market_date to date
-        String query = "UPDATE SysInfo SET is_open = true SET market_date = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, newDate);
-            statement.executeUpdate();
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        boolean open = sysInfoDAO.openMarket(newDate);
+        if(open){
             System.out.println("Market has been opened.");
-        }catch(Exception e){
-            System.out.println("ERROR: opening market failed.");
-            e.printStackTrace();
-            System.out.println(e);
         }
+        
     }
     public void closeMarket(){
         //??
         //set all stock current prices to stock closing prices
         //then set is_open to false
         //should be a trigger operation or manual
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        sysInfoDAO.closeMarket();
 
     }
 
@@ -298,19 +296,11 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     }
 
     public void setCurrentDate(String newDate){
-        String query = "UPDATE SysInfo SET market_date = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, newDate);
-            statement.executeUpdate();
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        boolean date = sysInfoDAO.setDate(newDate);
+        if(date){
             System.out.println("Date has been updated.");
-        }catch(Exception e){
-            System.out.println("ERROR: setting current date failed.");
-            e.printStackTrace();
-            System.out.println(e);
         }
-
     }
 
     public void main(String[] args) {
