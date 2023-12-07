@@ -8,8 +8,9 @@ public interface TraderInterfaceDAO {
     public void withdrawal(float amount, String username);
     public void buy(String stockSymbol, float quantity, String username);
     public void sell(String stockSymbol, float quantity, String username, float purchasePrice);
-    public void cancel(String transactionId);
-    public void showMarketAccountBalance();
+    public void cancelMarketTransaction(String username);
+    public void cancelStockTransaction(String username);
+    public void showMarketAccountBalance(String username);
     public void showTransactionHistory();
     public void getCurrentStockPrice(String stockSymbol);
     public void showActorProfile(String actorName);

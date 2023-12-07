@@ -4,6 +4,6 @@ import Src.MarketAccountTransaction;
 
 public interface MarketAccountTransactionDAO {
     boolean createMarketAccountTransaction(MarketAccountTransaction marketAccountTransaction);
-    boolean cancelMarketAccountTransaction(int mkta_id);
+    MarketAccountTransaction cancelMarketAccountTransaction(int mkta_id);
     boolean clearAllMarketAccountTransactions();
 }

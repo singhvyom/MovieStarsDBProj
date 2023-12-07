@@ -4,6 +4,6 @@ import Src.StockAccountTransaction;
 
 public interface StockAccountTransactionDAO {
     boolean createStockAccountTransaction(StockAccountTransaction stockAccountTransaction);
-    boolean cancelTransaction(int mkta_id);
+    StockAccountTransaction cancelStockAccountTransaction(int mkta_id);
     boolean clearAllTransactions();
 }

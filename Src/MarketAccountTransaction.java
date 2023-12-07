@@ -14,6 +14,8 @@ public class MarketAccountTransaction {
         this.date = date;
     }
 
+    public MarketAccountTransaction() {}
+
     public int getMkta_id() {
         return mkta_id;
     }

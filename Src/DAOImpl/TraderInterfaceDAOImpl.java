@@ -21,9 +21,9 @@ import Src.MarketAccountTransaction;
 
 import java.util.ArrayList;
 
-public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
+public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
     //implement functions in TraderInterfaceDAO
-    public void registerCustomer(String username)){
+    public void registerCustomer(String username){
         // TODO Create a new customer in the database
         Scanner scanner = new Scanner(System.in);
         System.out.println("Please enter your name: ");
@@ -107,7 +107,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
 
         marketAccountDAO.updateBalance(username, -totalCost-20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, quantity);
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "buy", "2020-12-12");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, quantity, "buy", "2020-12-12");
         marketAccountTransactionDDO.createMarketAccountTransaction(marketAccountTransaction);
         StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "buy", "2020-12-12", 0);
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
@@ -138,17 +138,54 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
     }
 
-    public void cancel(int transactionId){
-        // TODO Cancel the given transaction
-        MarketAccountTransactionDAO marketAccountTransaction = new MarketAccountTransactionDAOImpl();
-        boolean cancel = marketAccountTransaction.cancelMarketAccountTransaction(transactionId);
-        if(cancel){
+    @Override
+    public void cancelMarketTransaction(String username) {
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        MarketAccountTransactionDAO marketAccountTransactionDDO = new MarketAccountTransactionDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+
+        MarketAccountTransaction deletedTransaction = marketAccountTransactionDDO.cancelMarketAccountTransaction(mkta_id);
+        if(deletedTransaction == null){
+            System.out.println("No transactions to cancel.");
+            return;
+        }
+        else {
             System.out.println("Transaction cancelled.");
         }
-        else{
-            System.out.println("Transaction not found.");
+
+        if(deletedTransaction.getType().equals("deposit") || deletedTransaction.getType().equals("sell")){
+            marketAccountDAO.updateBalance(username, -deletedTransaction.getAmount());
         }
-        
+        else if(deletedTransaction.getType().equals("withdrawal") || deletedTransaction.getType().equals("buy")){
+            marketAccountDAO.updateBalance(username, deletedTransaction.getAmount());
+        }
+        marketAccountDAO.updateBalance(username, 20);
+    }
+
+    @Override
+    public void cancelStockTransaction(String username) {
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        StockAccountDAO stockAccountDAO = new StockAccountDAOImpl();
+        StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
+
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+        StockAccountTransaction deletedTransaction = stockAccountTransactionDAO.cancelStockAccountTransaction(mkta_id);
+        if(deletedTransaction == null){
+            System.out.println("No transactions to cancel.");
+            return;
+        }
+        else{
+            System.out.println("Transaction cancelled.");
+        }
+
+        String stock = deletedTransaction.getStock();
+        if(deletedTransaction.getType().equals("buy")){
+            stockAccountDAO.updateShares(stock, mkta_id, -deletedTransaction.getShares());
+        }
+        else if(deletedTransaction.getType().equals("sell")){
+            stockAccountDAO.updateShares(stock, mkta_id, deletedTransaction.getShares());
+        }
+        cancelMarketTransaction(username);
     }
 
     public void showMarketAccountBalance(String username){
@@ -322,7 +359,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
                 case 5:
                     System.out.println("What transaction would you like to cancel?");
                     String transactionId = scanner2.nextLine();
-                    cancel(transactionId);
+                    // cancel(transactionId);
                     break;
                 case 6:
                     showMarketAccountBalance(username);

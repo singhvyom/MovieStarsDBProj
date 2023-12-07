@@ -18,6 +18,8 @@ public class StockAccountTransaction {
         this.profit = profit;
     }
 
+    public StockAccountTransaction() {}
+
     public String getStock() {
         return stock;
     }
