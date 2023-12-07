@@ -265,14 +265,29 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         }
         
     }
-    public void openMarket(){
+    public void openMarket(String newDate){
         //what does this mean
         //per piazza can merge with set currrent date
-        // open market on day X
+        // open market on date. set is_open to true, set market_date to date
+        String query = "UPDATE SysInfo SET is_open = true SET market_date = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, newDate);
+            statement.executeUpdate();
+            System.out.println("Market has been opened.");
+        }catch(Exception e){
+            System.out.println("ERROR: opening market failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
     }
     public void closeMarket(){
         //??
-        //what is the notion of opening and closing our market mean
+        //set all stock current prices to stock closing prices
+        //then set is_open to false
+        //should be a trigger operation or manual
+
     }
 
     public void setStockPrice(String stockSymbol, float newPrice){
@@ -283,7 +298,19 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     }
 
     public void setCurrentDate(String newDate){
-        //TODO: figure out how we are storing the date in our system
+        String query = "UPDATE SysInfo SET market_date = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, newDate);
+            statement.executeUpdate();
+            System.out.println("Date has been updated.")
+        }catch(Exception e){
+            System.out.println("ERROR: setting current date failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+
     }
 
     public void main(String[] args) {

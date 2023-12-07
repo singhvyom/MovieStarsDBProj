@@ -14,4 +14,5 @@ public interface ManagerInterfaceDAO {
     void closeMarket();
     void setStockPrice(String stockSymbol, float price);
     void setDate(String date);
+    
 }
