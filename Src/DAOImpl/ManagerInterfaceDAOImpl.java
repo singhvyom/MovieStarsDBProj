@@ -9,6 +9,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Calendar;
 import Src.DbConnection;
+import Src.ActorProfileStock;
+import Src.DAO.ActorProfileStockDAO;
+import Src.DAOImpl.ActorProfileStockDAOImpl;
 
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
@@ -219,8 +222,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             e.printStackTrace();
             System.out.println(e);
         }
-        
-      
+    
     }
 
     public void generateDTER(){
@@ -263,8 +265,25 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         }
         
     }
+    public void openMarket(){
+        //what does this mean
+    }
+    public void closeMarket(){
+        //??
+    }
 
-    public static void main(String[] args) {
+    public void setStockPrice(String stockSymbol, float newPrice){
+        ActorProfileStockDAO actorProfileStockDAO = new ActorProfileStockDAOImpl();
+        ActorProfileStock actorProfileStock = actorProfileStockDAO.getActorProfileStock(stockSymbol);
+        actorProfileStock.setCurrentPrice(newPrice);
+        System.out.println("Stock price has been updated.");
+    }
+
+    public void setCurrentDate(String newDate){
+        //TODO: figure out how we are storing the date in our system
+    }
+
+    public void main(String[] args) {
         // prompt manager for options and call the appropriate function
         // first manager needs to login
         ManagerInterfaceDAOImpl manager = new ManagerInterfaceDAOImpl();
@@ -294,37 +313,58 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         System.out.println("4. Generate DTER");
         System.out.println("5. Customer Report");
         System.out.println("6. Delete Transactions");
-        System.out.println("7. Exit");
+        System.out.println("Test, Debug, Demo Operations:")
+        System.out.println("7. Open market for the day");
+        System.out.println("8. Close market for the day");
+        System.out.println("9. Set a new price for the stock")
+        System.out.println("10. Set current date");
+        System.out.println("11. Exit");
         int choice = scanner2.nextInt();
-        while(choice != 7){
+        while(choice != 11){
             switch(choice){
                 case 1:
                     System.out.println("Enter the interest rate as a decimal: ");
                     float interestRate = scanner2.nextFloat();
-                    manager.addInterest(interestRate);
-
+                    addInterest(interestRate);
                     break;
                 case 2:
                     System.out.println("Enter the customer username: ");
                     String customerUsername = scanner2.nextLine();
                     Customer customer = customerDAO.getCustomer(customerUsername);
-                    manager.generateMonthlyStatement(customer);
+                    generateMonthlyStatement(customer);
                     break;
                 case 3:
-                    manager.listActiveCustomers();
+                    listActiveCustomers();
                     break;
                 case 4:
-                    manager.generateDTER();
+                    generateDTER();
                     break;
                 case 5:
                     System.out.println("Enter the customer username: ");
                     String customerUsername2 = scanner2.nextLine(); 
                     Customer customer2 = customerDAO.getCustomer(customerUsername2);
-                    manager.customerReport(customer2);
+                    customerReport(customer2);
                     break;
                 case 6:
                     System.out.println("Deleting all transactions...");
                     manager.deleteTransactions();
+                    break;
+                case 7:
+                    System.out.println("Opening market for the day...");
+                    break;
+                case 8:
+                    System.out.println("Closing market for the day...");
+                    break;
+                case 9:
+                    System.out.println("Enter the new price for the stock: ");
+                    float newPrice = scanner2.nextFloat();
+                    System.out.println("Enter the stock symbol: ");
+                    String stockSymbol = scanner2.nextLine();
+                    setStockPrice(stockSymbol, newPrice);
+                    break;
+                case 10:
+                    System.out.println("Enter the new date: ");
+                    String newDate = scanner2.nextLine();
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -337,11 +377,16 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println("4. Generate DTER");
             System.out.println("5. Customer Report");
             System.out.println("6. Delete Transactions");
-            System.out.println("7. Exit");
+            System.out.println("Test, Debug, Demo Operations:")
+            System.out.println("7. Open market for the day");
+            System.out.println("8. Close market for the day");
+            System.out.println("9. Set a new price for the stock")
+            System.out.println("10. Set current date");
+            System.out.println("11. Exit");
             choice = scanner.nextInt();
         }
         System.out.println("Goodbye!");
-        //close scanner when 7 is selected
+        //close scanner when 11 is selected
         scanner.close();
         scanner2.close();
 

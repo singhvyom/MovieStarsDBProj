@@ -3,12 +3,15 @@ import Src.Customer;
 
 public interface ManagerInterfaceDAO {
     //functions for the manager interface
-    public boolean login(String username, String password);
-    public void addInterest(float interestRate);
-    public void generateMonthlyStatement(Customer customer);
-    public void listActiveCustomers();
-    public void generateDTER();
-    public void customerReport(Customer customer);
-    public void deleteTransactions();
-    
+    boolean login(String username, String password);
+    void addInterest(float interestRate);
+    void generateMonthlyStatement(Customer customer);
+    void listActiveCustomers();
+    void generateDTER();
+    void customerReport(Customer customer);
+    void deleteTransactions();
+    void openMarket();
+    void closeMarket();
+    void setStockPrice(String stockSymbol, float price);
+    void setDate(String date);
 }
