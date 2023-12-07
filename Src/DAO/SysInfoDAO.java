@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import Src.DbConnection;
+//MARKET OPEN IS 0, MARKET CLOSED IS 1
 
 public interface SysInfoDAO {
     boolean setDate(String date);
@@ -12,23 +13,7 @@ public interface SysInfoDAO {
     boolean closeMarket();
     //either function to get the current month/date 
     //or we do impl in here but better done in manager interface
-    private String getMarketDate() {
-        String date = "";
-        String  query = "SELECT market_date FROM SysInfo";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-            ResultSet resultSet = statement.executeQuery();
-            while(resultSet.next()){
-                date = resultSet.getString("market_date");
-            }
-            return date;
-        }catch(Exception e){
-            System.out.println("ERROR: getting market date failed.");
-            e.printStackTrace();
-            System.out.println(e);
-        }
-        return date;
+    String getMarketDate();
 
     }
 }

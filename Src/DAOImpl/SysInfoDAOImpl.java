@@ -72,4 +72,24 @@ public class SysInfoDAOImpl implements SysInfoDAO {
         }
         return false;
     }
+
+    @Override
+    public String getMarketDate() {
+        String date = "";
+        String  query = "SELECT market_date FROM SysInfo";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            while(resultSet.next()){
+                date = resultSet.getString("market_date");
+            }
+            return date;
+        }catch(Exception e){
+            System.out.println("ERROR: getting market date failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+        return date;
+    }
 }
