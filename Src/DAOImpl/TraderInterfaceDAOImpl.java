@@ -1,22 +1,12 @@
 package Src.DAOImpl;
 
 import java.util.Scanner;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import Src.Customer;
 import Src.DAO.*;
-import Src.DbConnection;
-import Src.DAOImpl.MarketAccountDAOImpl;
-import Src.DAOImpl.MarketAccountTransactionDAOImpl;
-import Src.DAOImpl.ActorProfileStockDAOImpl;
 import Src.ActorProfileStock;
-import Src.DAOImpl.MovieDAOImpl;
 import Src.Movie;
 import Src.StockAccountTransaction;
-import Src.MarketAccount;
 import Src.MarketAccountTransaction;
 
 import java.util.ArrayList;
@@ -70,7 +60,7 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         MarketAccountTransactionDAO marketAccountTransactionDDO = new MarketAccountTransactionDAOImpl();
         marketAccountDAO.updateBalance(username, amount);
         int mkta_id = marketAccountDAO.getMarketAccountId(username);
-        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "deposit", "2020-12-12");
+        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "deposit");
         marketAccountTransactionDDO.createMarketAccountTransaction(transaction);
     }
 
@@ -80,7 +70,7 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         MarketAccountTransactionDAO marketAccountTransactionDDO = new MarketAccountTransactionDAOImpl();
         marketAccountDAO.updateBalance(username, -amount);
         int mkta_id = marketAccountDAO.getMarketAccountId(username);
-        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "withdrawal", "2020-12-12");
+        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "withdrawal");
         marketAccountTransactionDDO.createMarketAccountTransaction(transaction);
     }
 
@@ -107,9 +97,9 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
 
         marketAccountDAO.updateBalance(username, -totalCost-20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, quantity);
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, quantity, "buy", "2020-12-12");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, quantity, "buy");
         marketAccountTransactionDDO.createMarketAccountTransaction(marketAccountTransaction);
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "buy", "2020-12-12", 0);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "buy", 0);
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
     }
 
@@ -132,9 +122,9 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
 
         marketAccountDAO.updateBalance(username, totalCost-20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, -quantity);
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "sell", "2020-12-12");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "sell");
         marketAccountTransactionDDO.createMarketAccountTransaction(marketAccountTransaction);
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "sell", "2020-12-12", totalCost-purchasePrice);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "sell", totalCost-purchasePrice);
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
     }
 

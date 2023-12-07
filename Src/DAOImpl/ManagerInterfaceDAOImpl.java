@@ -304,7 +304,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, newDate);
             statement.executeUpdate();
-            System.out.println("Date has been updated.")
+            System.out.println("Date has been updated.");
         }catch(Exception e){
             System.out.println("ERROR: setting current date failed.");
             e.printStackTrace();
@@ -343,10 +343,10 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         System.out.println("4. Generate DTER");
         System.out.println("5. Customer Report");
         System.out.println("6. Delete Transactions");
-        System.out.println("Test, Debug, Demo Operations:")
+        System.out.println("Test, Debug, Demo Operations:");
         System.out.println("7. Open market for the day");
         System.out.println("8. Close market for the day");
-        System.out.println("9. Set a new price for the stock")
+        System.out.println("9. Set a new price for the stock");
         System.out.println("10. Set current date");
         System.out.println("11. Exit");
         int choice = scanner2.nextInt();
@@ -407,10 +407,10 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println("4. Generate DTER");
             System.out.println("5. Customer Report");
             System.out.println("6. Delete Transactions");
-            System.out.println("Test, Debug, Demo Operations:")
+            System.out.println("Test, Debug, Demo Operations:");
             System.out.println("7. Open market for the day");
             System.out.println("8. Close market for the day");
-            System.out.println("9. Set a new price for the stock")
+            System.out.println("9. Set a new price for the stock");
             System.out.println("10. Set current date");
             System.out.println("11. Exit");
             choice = scanner.nextInt();

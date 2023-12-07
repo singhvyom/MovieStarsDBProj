@@ -10,9 +10,9 @@ public interface ManagerInterfaceDAO {
     void generateDTER();
     void customerReport(Customer customer);
     void deleteTransactions();
-    void openMarket();
+    void openMarket(String newDate);
     void closeMarket();
     void setStockPrice(String stockSymbol, float price);
-    void setDate(String date);
+    //void setDate(String date);
     
 }

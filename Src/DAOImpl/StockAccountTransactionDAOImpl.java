@@ -13,15 +13,15 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
 
     public static void main(String[] args) {
         StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction("BCL", 1, 10, "buy", "2020-12-12", 100);
-        stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction("BCL", 1, 10, "buy", 0);
+//        stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
         StockAccountTransaction s = stockAccountTransactionDAO.cancelStockAccountTransaction(1);
         System.out.println(s.getShares() + " " + s.getStock());
     }
 
     @Override
     public boolean createStockAccountTransaction(StockAccountTransaction stockAccountTransaction) {
-        String query = "INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_date, profit)VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, profit, transaction_date)VALUES (?, ?, ?, ?, ?, (SELECT market_date FROM SysInfo))";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -29,8 +29,7 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
             statement.setInt(2, stockAccountTransaction.getMkta_id());
             statement.setFloat(3, stockAccountTransaction.getShares());
             statement.setString(4, stockAccountTransaction.getType());
-            statement.setDate(5, java.sql.Date.valueOf(stockAccountTransaction.getDate()));
-            statement.setFloat(6, stockAccountTransaction.getProfit());
+            statement.setFloat(5, stockAccountTransaction.getProfit());
             statement.executeUpdate();
             return true;
         } catch (Exception e) {
@@ -43,8 +42,10 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
 
     @Override
     public StockAccountTransaction cancelStockAccountTransaction(int mkta_id) {
-        String selectQuery = "SELECT * FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from StockAccountTransaction WHERE mkta_id = ?)";
-        String deleteQuery = "DELETE FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from StockAccountTransaction WHERE mkta_id = ?)";
+        String selectQuery = "SELECT * FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from " +
+                "StockAccountTransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo))";
+        String deleteQuery = "DELETE FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from " +
+                "StockAccountTransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo))";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);

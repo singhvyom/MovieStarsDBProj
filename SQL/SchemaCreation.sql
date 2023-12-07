@@ -161,8 +161,8 @@ INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_da
 CREATE TABLE SysInfo
 (
     market_date date,
-    is_open boolean,
+    is_open number(1),
     PRIMARY KEY (market_date)
-)
+);
 
 Commit;
