@@ -158,4 +158,11 @@ CREATE TABLE StockAccountTransaction
 
 INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_date, profit)VALUES ('AFH', 001, 100, 'BUY', '01-JAN-2018', 0);
 
+CREATE TABLE SysInfo
+(
+    market_date date,
+    is_open boolean,
+    PRIMARY KEY (market_date)
+)
+
 Commit;

@@ -267,9 +267,12 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     }
     public void openMarket(){
         //what does this mean
+        //per piazza can merge with set currrent date
+        // open market on day X
     }
     public void closeMarket(){
         //??
+        //what is the notion of opening and closing our market mean
     }
 
     public void setStockPrice(String stockSymbol, float newPrice){
@@ -347,7 +350,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                     break;
                 case 6:
                     System.out.println("Deleting all transactions...");
-                    manager.deleteTransactions();
+                    deleteTransactions();
                     break;
                 case 7:
                     System.out.println("Opening market for the day...");
