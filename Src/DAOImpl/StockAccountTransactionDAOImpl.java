@@ -6,6 +6,7 @@ import Src.StockAccountTransaction;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class StockAccountTransactionDAOImpl implements StockAccountTransactionDAO {
@@ -13,13 +14,13 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
     public static void main(String[] args) {
         StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
         StockAccountTransaction stockAccountTransaction = new StockAccountTransaction("BCL", 1, 10, "buy", "2020-12-12", 100);
-//        stockAccountTransactionDAO.addTransaction(stockAccountTransaction);
-//        stockAccountTransactionDAO.cancelTransaction(1);
-        stockAccountTransactionDAO.clearAllTransactions();
+        stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
+        StockAccountTransaction s = stockAccountTransactionDAO.cancelStockAccountTransaction(1);
+        System.out.println(s.getShares() + " " + s.getStock());
     }
 
     @Override
-    public boolean addTransaction(StockAccountTransaction stockAccountTransaction) {
+    public boolean createStockAccountTransaction(StockAccountTransaction stockAccountTransaction) {
         String query = "INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_date, profit)VALUES (?, ?, ?, ?, ?, ?)";
         try {
             Connection connection = DbConnection.getConnection();
@@ -41,20 +42,32 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
     }
 
     @Override
-    public boolean cancelTransaction(int mkta_id) {
-        String query = "DELETE FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from StockAccountTransaction WHERE mkta_id = ?)";
+    public StockAccountTransaction cancelStockAccountTransaction(int mkta_id) {
+        String selectQuery = "SELECT * FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from StockAccountTransaction WHERE mkta_id = ?)";
+        String deleteQuery = "DELETE FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from StockAccountTransaction WHERE mkta_id = ?)";
         try {
             Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, mkta_id);
-            statement.executeUpdate();
-            return true;
+            PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+            selectStatement.setInt(1, mkta_id);
+            ResultSet resultSet = selectStatement.executeQuery();
+            StockAccountTransaction stockAccountTransaction = new StockAccountTransaction();
+            while(resultSet.next()) {
+                stockAccountTransaction.setStock(resultSet.getString("stock"));
+                stockAccountTransaction.setMkta_id(resultSet.getInt("mkta_id"));
+                stockAccountTransaction.setShares(resultSet.getFloat("shares"));
+                stockAccountTransaction.setType(resultSet.getString("type"));
+            }
+
+            PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
+            deleteStatement.setInt(1, mkta_id);
+            deleteStatement.executeUpdate();
+            return stockAccountTransaction;
         } catch (Exception e) {
             System.out.println("ERROR: cancellation failed.");
             e.printStackTrace();
             System.out.println(e);
         }
-        return false;
+        return null;
     }
 
     @Override

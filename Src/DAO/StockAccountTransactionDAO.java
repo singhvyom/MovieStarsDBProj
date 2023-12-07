@@ -3,7 +3,7 @@ package Src.DAO;
 import Src.StockAccountTransaction;
 
 public interface StockAccountTransactionDAO {
-    boolean addTransaction(StockAccountTransaction stockAccountTransaction);
-    boolean cancelTransaction(int mkta_id);
+    boolean createStockAccountTransaction(StockAccountTransaction stockAccountTransaction);
+    StockAccountTransaction cancelStockAccountTransaction(int mkta_id);
     boolean clearAllTransactions();
 }

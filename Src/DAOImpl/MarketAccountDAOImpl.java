@@ -7,6 +7,7 @@ import Src.MarketAccount;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class MarketAccountDAOImpl implements MarketAccountDAO {
     public static void main(String[] args) {
@@ -73,5 +74,46 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
             System.out.println(e);
         }
         return false;
+    }
+
+    @Override
+    public int getMarketAccountId(String username) {
+        String query = "SELECT mkta_id FROM MarketAccount WHERE username = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            int mkta_id = -1;
+            while(resultSet.next()) {
+                mkta_id = resultSet.getInt("mkta_id");
+            }
+            return mkta_id;
+        } catch (Exception e) {
+            System.out.println("ERROR: login failed.");
+            System.out.println(e);
+        }
+
+        return -1;
+    }
+
+    @Override
+    public float getBalance(String username) {
+        String query = "SELECT balance FROM MarketAccount WHERE username = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            float balance = -1;
+            while(resultSet.next()) {
+                balance = resultSet.getFloat("balance");
+            }
+            return balance;
+        } catch (Exception e) {
+            System.out.println("ERROR: login failed.");
+            System.out.println(e);
+        }
+        return -1;
     }
 }

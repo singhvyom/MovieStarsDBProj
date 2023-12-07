@@ -22,7 +22,6 @@ public class StockAccountDAOImpl implements StockAccountDAO {
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, stock);
             statement.setInt(2, mkta_id);
-            statement.setFloat(3, 0);
             statement.executeUpdate();
             return true;
         } catch (Exception e) {
@@ -50,5 +49,39 @@ public class StockAccountDAOImpl implements StockAccountDAO {
             System.out.println(e);
         }
         return false;
+    }
+
+    @Override
+    public boolean stockAccountExists(String stock, int mkta_id) {
+        String query = "SELECT * FROM stockaccount WHERE stock = ? AND mkta_id = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, stock);
+            statement.setInt(2, mkta_id);
+            return statement.executeQuery().next();
+        } catch (Exception e) {
+            System.out.println("ERROR: stock account check failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+        return false;
+    }
+
+    @Override
+    public float getShares(String stock, int mkta_id) {
+        String query = "SELECT shares_owned FROM stockaccount WHERE stock = ? AND mkta_id = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, stock);
+            statement.setInt(2, mkta_id);
+            return statement.executeQuery().getFloat("shares_owned");
+        } catch (Exception e) {
+            System.out.println("ERROR: stock account check failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+        return -1;
     }
 }

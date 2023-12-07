@@ -4,10 +4,10 @@ import Src.DAO.MarketAccountTransactionDAO;
 import Src.DbConnection;
 import Src.MarketAccountTransaction;
 
-import javax.swing.plaf.nimbus.State;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.ResultSet;
 
 public class MarketAccountTransactionDAOImpl implements MarketAccountTransactionDAO {
 
@@ -41,20 +41,31 @@ public class MarketAccountTransactionDAOImpl implements MarketAccountTransaction
     }
 
     @Override
-    public boolean cancelMarketAccountTransaction(int mkta_id) {
-        String query = "DELETE FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from marketaccounttransaction WHERE mkta_id = ?)";
+    public MarketAccountTransaction cancelMarketAccountTransaction(int mkta_id) {
+        String selectQuery = "SELECT * FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from marketaccounttransaction WHERE mkta_id = ?)";
+        String deleteQuery = "DELETE FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from marketaccounttransaction WHERE mkta_id = ?)";
         try {
             Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, mkta_id);
-            statement.executeUpdate();
-            return true;
+            PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
+            selectStatement.setInt(1, mkta_id);
+            ResultSet resultSet = selectStatement.executeQuery();
+            MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction();
+            while(resultSet.next()) {
+                marketAccountTransaction.setMkta_id(resultSet.getInt("mkta_id"));
+                marketAccountTransaction.setAmount(resultSet.getFloat("amount"));
+                marketAccountTransaction.setType(resultSet.getString("type"));
+            }
+
+            PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
+            deleteStatement.setInt(1, mkta_id);
+            deleteStatement.executeUpdate();
+            return marketAccountTransaction;
         } catch (Exception e) {
             System.out.println("ERROR: cancellation failed.");
             e.printStackTrace();
             System.out.println(e);
         }
-        return false;
+        return null;
     }
 
     @Override
