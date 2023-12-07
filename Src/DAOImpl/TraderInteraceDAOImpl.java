@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
     //implement functions in TraderInterfaceDAO
-    public void registerCustomer(){
+    public void registerCustomer(String username)){
         // TODO Create a new customer in the database
         Scanner scanner = new Scanner(System.in);
         System.out.println("Please enter your name: ");
@@ -39,8 +39,6 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         String taxID = scanner.nextLine();
         System.out.println("Please create your password: ");
         String password = scanner.nextLine();
-        System.out.println("Please create your username: ");
-        String username = scanner.nextLine();
         Customer customer = new Customer(name, state, phoneNum, email, taxID, password, username);
         CustomerDAO customerDAO = new CustomerDAOImpl();
         
@@ -54,27 +52,16 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         scanner.close();
     };
 
-    public void login(CustomerDAO customerDAO) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Please enter your username: ");
-        String username = scanner.nextLine();
-        System.out.println("Please enter your password: ");
-        String password = scanner.nextLine();
+    public void login(String username, String password) {
+        CustomerDAO customerDAO = new CustomerDAOImpl();
         String customerName = customerDAO.login(username, password);
-        if (customerName == null) {
-            while (true) {
-                System.out.println("Login failed. Please try again.");
-                System.out.println("Please enter your username: ");
-                username = scanner.nextLine();
-                System.out.println("Please enter your password: ");
-                password = scanner.nextLine();
-                customerName = customerDAO.login(username, password);
-                if (customerName != null) {
-                    break;
-                }
-            }
+        if(customerName == null){
+            System.out.println("Login failed.");
+            return;
         }
-        scanner.close();
+        else{
+            System.out.println("Login successful.");
+        }
         System.out.println("Welcome " + customerName + "!");
     }
 
@@ -98,6 +85,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
     }
 
     public void buy(String stockSymbol, float quantity, String username){
+        
         StockAccountDAO stockAccountDAO = new StockAccountDAOImpl();
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
         ActorProfileStockDAO actorProfileStockDAO = new ActorProfileStockDAOImpl();
@@ -109,12 +97,14 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         if(!stockAccountDAO.stockAccountExists(stockSymbol, mkta_id)) {
             stockAccountDAO.createStockAccount(stockSymbol, mkta_id);
         }
+
         float currentPrice = actorProfileStockDAO.getActorProfileStock(stockSymbol).getCurrentPrice();
         float totalCost = currentPrice * quantity;
         if(marketAccountDAO.getBalance(username) < totalCost+20) {
             System.out.println("Insufficient funds.");
             return;
         }
+
         marketAccountDAO.updateBalance(username, -totalCost-20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, quantity);
         MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "buy", "2020-12-12");
@@ -124,6 +114,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
     }
 
     public void sell(String stockSymbol, float quantity, String username, float purchasePrice){
+
         StockAccountDAO stockAccountDAO = new StockAccountDAOImpl();
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
         ActorProfileStockDAO actorProfileStockDAO = new ActorProfileStockDAOImpl();
@@ -138,6 +129,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
             System.out.println("Insufficient funds.");
             return;
         }
+
         marketAccountDAO.updateBalance(username, totalCost-20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, -quantity);
         MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "sell", "2020-12-12");
@@ -163,18 +155,13 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         // TODO Return the current balance of the market account for the customer
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
         //get market account by customer username with new function
-        MarketAccount marketAccount = marketAccountDAO.getMarketAccount(username);
-        if(marketAccount == null){
-            System.out.println("Market account not found.");
-        }
-        else{
-            System.out.println("Current balance is: " + marketAccount.getBalance());
-        }
+        float marketAccountBalance = marketAccountDAO.getBalance(username);
+        System.out.println("Your market account balance is: " + marketAccountBalance);
     }
 
     public void showTransactionHistory(){
         //would show the entire list of transactions for stock account
-        //change this query, can't access transactions for a customer like this
+         
         
         
     }
@@ -261,6 +248,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
     public void main(String[] args) {
         // TODO Prompt user to make choices and call the appropriate functions
         Scanner scanner = new Scanner(System.in);
+        String username = ""; //used to access the customer that we want
         System.out.println("Welcome to the Trader Interface!");
         System.out.println("If you are a new user, please register.");
         System.out.println("Type 1 to register, or 2 to login.");
@@ -274,29 +262,21 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
             //register a new user
             //log them in too
             //prompts in registerCustomer()
-            registerCustomer();
+            System.out.println("Please create your username: ");
+            username = scanner.nextLine();
+            registerCustomer(username);
 
         }
         else if(newUser == 2){
             System.out.println("Please enter your username: ");
-            String username = scanner.nextLine();   
-
-            while(true){
-                System.out.println("Please enter your password: "); 
-                String password = scanner.nextLine();   
-                if(login(username, password)){
-                    System.out.println("Login successful!");
-                    break;
-                }
-                else{
-                    System.out.println("Login failed. Try again.");
-                }
-            }
+            username = scanner.nextLine();
+            System.out.println("Please enter your password: ");
+            String password = scanner.nextLine();
+            login(username, password);
         }
         
         scanner.close();
-        //get the customer so we can access them anywhere
-    
+        
         Scanner scanner2 = new Scanner(System.in);
         System.out.println("What would you like to do?");
         System.out.println("1. Deposit");
@@ -309,35 +289,35 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
         System.out.println("8. Get Current Stock Price");
         System.out.println("9. Show Actor Profile");
         System.out.println("10. Show Movie Information");
-        System.out.println("11. List Top Movies");
-        System.out.println("12.Exit");
+        System.out.println("11.Exit");
         int choice = scanner2.nextInt();
 
-        while(choice != 12){
+        while(choice != 11){
             switch(choice){
                 case 1:
                     System.out.println("How much would you like to deposit?");
-                    double amount = scanner2.nextDouble();
-                    deposit(amount, );
+                    float amount = scanner2.nextFloat();
+                    deposit(amount, username);
                     break;
                 case 2:
                     System.out.println("How much would you like to withdraw?");
-                    double amount2 = scanner2.nextDouble();
-                    withdrawal(amount2);
+                    float amount2 = scanner2.nextFloat();
+                    withdrawal(amount2, username);
                     break;
                 case 3:
                     System.out.println("What stock would you like to buy?");
                     String stockSymbol = scanner2.nextLine();
                     System.out.println("How many shares would you like to buy?");
                     int quantity = scanner2.nextInt();
-                    buy(stockSymbol, quantity, );
+                    buy(stockSymbol, quantity, username);
                     break;
                 case 4:
                     System.out.println("What stock would you like to sell?");
                     String stockSymbol2 = scanner2.nextLine();
                     System.out.println("How many shares would you like to sell?");
                     int quantity2 = scanner2.nextInt();
-                    sell(stockSymbol2, quantity2, , );
+                    //how to get purchase price of same stock?
+                    //sell(stockSymbol2, quantity2, username, purchasePrice = 0.0  );
                     break;
                 case 5:
                     System.out.println("What transaction would you like to cancel?");
@@ -345,7 +325,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
                     cancel(transactionId);
                     break;
                 case 6:
-                    System.out.println("Your current market account balance is: " + showMarketAccountBalance());
+                    showMarketAccountBalance(username);
                     break;
                 case 7:
                     showTransactionHistory();
@@ -353,7 +333,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
                 case 8:
                     System.out.println("What stock would you like to get the current price of?");
                     String stockSymbol3 = scanner2.nextLine();
-                    System.out.println("The current price of " + stockSymbol3 + " is: " + getCurrentStockPrice(stockSymbol3));
+                    getCurrentStockPrice(stockSymbol3);
                     break;
                 case 9:
                     System.out.println("What actor would you like to see the profile of?");
@@ -363,15 +343,9 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
                 case 10:
                     System.out.println("What movie would you like to see information about?");
                     String movieTitle = scanner2.nextLine();
-                    showMovieInformation(movieTitle);
-                    break;
-                case 11:
-                    System.out.println("What year range would you like to see the top movies of?");
-                    System.out.println("Start year: ");
-                    int startYear = scanner2.nextInt();
-                    System.out.println("End year: ");
-                    int endYear = scanner2.nextInt();
-                    listTopMovies(startYear, endYear);
+                    System.out.println("What year was the movie released?");
+                    int year = scanner2.nextInt();
+                    showMovieInformation(movieTitle, year);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -388,8 +362,7 @@ public class TraderInteraceDAOImpl implements TraderInterfaceDAO {
             System.out.println("8. Get Current Stock Price");
             System.out.println("9. Show Actor Profile");
             System.out.println("10. Show Movie Information");
-            System.out.println("11. List Top Movies");
-            System.out.println("12.Exit");
+            System.out.println("11.Exit");
             choice = scanner2.nextInt();
 
         }
