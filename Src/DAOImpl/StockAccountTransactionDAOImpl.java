@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 public class StockAccountTransactionDAOImpl implements StockAccountTransactionDAO {
 
@@ -85,6 +86,32 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
             System.out.println(e);
         }
         return false;
+    }
+
+    @Override
+    public ArrayList<StockAccountTransaction> getStockAccountTransactions(int mkta_id) {
+        String query = "SELECT * FROM StockAccountTransaction WHERE mkta_id = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, mkta_id);
+            ResultSet resultSet = statement.executeQuery();
+            ArrayList<StockAccountTransaction> stockAccountTransactions = new ArrayList<>();
+            while(resultSet.next()) {
+                String stock = resultSet.getString("stock");
+                int mkta_id1 = resultSet.getInt("mkta_id");
+                float shares = resultSet.getFloat("shares");
+                String type = resultSet.getString("type");
+                float profit = resultSet.getFloat("profit");
+                StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stock, mkta_id1, shares, type, profit);
+                stockAccountTransactions.add(stockAccountTransaction);
+            }
+            return stockAccountTransactions;
+        } catch (Exception e) {
+            System.out.println("ERROR: getStockAccountTransactions failed.");
+            System.out.println(e);
+        }
+        return null;
     }
 
 }
