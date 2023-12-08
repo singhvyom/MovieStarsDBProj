@@ -97,9 +97,11 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
 
         marketAccountDAO.updateBalance(username, -totalCost-20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, quantity);
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, quantity, "buy");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "buy");
         marketAccountTransactionDDO.createMarketAccountTransaction(marketAccountTransaction);
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "buy", 0);
+        MarketAccountTransaction commission = new MarketAccountTransaction(mkta_id, 20, "commission");
+        marketAccountTransactionDDO.createMarketAccountTransaction(commission);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, quantity, "buy", 0);
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
     }
 
@@ -114,17 +116,19 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         int mkta_id = marketAccountDAO.getMarketAccountId(username);
 
         float currentPrice = actorProfileStockDAO.getActorProfileStock(stockSymbol).getCurrentPrice();
-        float totalCost = currentPrice * quantity;
+        float totalAmount = currentPrice * quantity;
         if(stockAccountDAO.getShares(stockSymbol, mkta_id) < quantity) {
             System.out.println("Insufficient funds.");
             return;
         }
 
-        marketAccountDAO.updateBalance(username, totalCost-20);
+        marketAccountDAO.updateBalance(username, totalAmount -20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, -quantity);
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "sell");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalAmount, "sell");
         marketAccountTransactionDDO.createMarketAccountTransaction(marketAccountTransaction);
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "sell", totalCost-purchasePrice);
+        MarketAccountTransaction commission = new MarketAccountTransaction(mkta_id, 20, "commission");
+        marketAccountTransactionDDO.createMarketAccountTransaction(commission);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, quantity, "sell", totalAmount -purchasePrice);
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
     }
 
@@ -149,7 +153,9 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         else if(deletedTransaction.getType().equals("withdrawal") || deletedTransaction.getType().equals("buy")){
             marketAccountDAO.updateBalance(username, deletedTransaction.getAmount());
         }
-        marketAccountDAO.updateBalance(username, 20);
+        MarketAccountTransaction commission = new MarketAccountTransaction(mkta_id, 20, "commission");
+        marketAccountTransactionDDO.createMarketAccountTransaction(commission);
+        marketAccountDAO.updateBalance(username, -20);
     }
 
     @Override

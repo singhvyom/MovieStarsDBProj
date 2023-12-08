@@ -43,9 +43,9 @@ public class MarketAccountTransactionDAOImpl implements MarketAccountTransaction
     @Override
     public MarketAccountTransaction cancelMarketAccountTransaction(int mkta_id) {
         String selectQuery = "SELECT * FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from " +
-                "marketaccounttransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo))";
+                "marketaccounttransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo) AND type <> 'commission')";
         String deleteQuery = "DELETE FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from " +
-                "marketaccounttransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo))";
+                "marketaccounttransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo) AND type <> 'commission')";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
