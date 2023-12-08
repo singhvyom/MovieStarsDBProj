@@ -1,7 +1,7 @@
 package Src.DAO;
 
 import Src.Customer;
-
+import java.util.Map;
 //import java.sql.Connection;
 
 public interface CustomerDAO {
@@ -11,4 +11,5 @@ public interface CustomerDAO {
     boolean updateCustomer(Customer customer);
     boolean deleteCustomer(Customer customer);
     Customer getCustomer(String username);
+    Customer getCustomerByid(int id);
 }
