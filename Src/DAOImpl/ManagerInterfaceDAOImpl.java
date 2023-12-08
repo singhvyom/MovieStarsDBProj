@@ -23,9 +23,8 @@ import java.util.HashMap;
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
     public boolean login(String username, String password) {
-        //TODO: check if the username and password are correct
-        // query the db for the username and password
-        String query = "SELECT * FROM ADMINISTRATOR WHERE username = " + username + " AND password = " + password;
+    
+        String query = "SELECT * FROM Admin WHERE username = " + username + " AND passwd = " + password;
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -46,6 +45,8 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println(e);
         }
         return false;
+       
+        
     }
     public void addInterest(float interestRate) {
         // TODO: For all market accounts, add the appropriate amount of monthly interest to the balance.
@@ -53,7 +54,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         // manager gets to set the interest rate
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         String marketDate = sysInfoDAO.getMarketDate();
-        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         int currentDay = date.getDayOfMonth();
         int lastDay = date.lengthOfMonth();
         if(currentDay != lastDay){
@@ -79,7 +80,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
        
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         String marketDate = sysInfoDAO.getMarketDate();
-        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         int month = date.getMonthValue();
         String monthString = String.valueOf(month);
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
@@ -104,7 +105,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     private ResultSet getStockAccountTransactions(String username){
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         String marketDate = sysInfoDAO.getMarketDate();
-        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         int month = date.getMonthValue();
         String monthString = String.valueOf(month);
         MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
@@ -144,7 +145,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         String marketDate = sysInfoDAO.getMarketDate();
-        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         int month = date.getMonthValue();
         String monthString = String.valueOf(month);
         String username = customer.getUsername();
@@ -202,18 +203,20 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         //query the db for all customers who have traded at least 1,000 shares in the current month
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         String marketDate = sysInfoDAO.getMarketDate();
-        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         int month = date.getMonthValue();
         String monthString = String.valueOf(month);
         //now for every customer, sum up numbrt of 'shares' for every
         //stock market transaction. display names if sum is greater than 1000
         Map<String, Float> customerShares = new HashMap<String, Float>();
 
-        String query = "SELECT sa.username, SUM(sat.shares) AS total_traded_shares " +
-                        "FROM StockAccountTransaction sat " +
-                        "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " +
-                        "WHERE EXTRACT(MONTH FROM sat.transaction_date) = ? " +
-                        "GROUP BY sa.username";
+        String query = "SELECT Customer.username, SUM(StockAccountTransaction.shares) AS total_traded_shares " +
+                        "FROM StockAccountTransaction " + 
+                        "JOIN StockAccount ON StockAccountTransaction.stock = StockAccount.stock AND StockAccountTransaction.mkta_id = StockAccount.mkta_id " + 
+                        "JOIN MarketAccount ON StockAccount.mkta_id = MarketAccount.mkta_id  " + 
+                        "JOIN Customer ON MarketAccount.username = Customer.username " +
+                        "WHERE EXTRACT(MONTH FROM StockAccountTransaction.transaction_date) = ? " + 
+                        "GROUP BY Customer.username";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -290,33 +293,36 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         // query the db for all customers who have made more than $10,000 in the last month
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         String marketDate = sysInfoDAO.getMarketDate();
-        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         int month = date.getMonthValue();
         String monthString = String.valueOf(month);
         
-        Map<String, Float> customerEarnings = new HashMap<String, Float>();
-        String query = "SELECT sa.username, SUM(sat.profit) AS total_earnings " + 
-                        "FROM StockAccountTransaction sat " +
-                        "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " + 
-                        "WHERE EXTRACT(MONTH FROM sat.transaction_date) " +
-                        "GROUP BY sa.username";
+        Map<Integer, Float> customerEarnings = new HashMap<Integer, Float>();
+        String query =  "SELECT StockAccount.mkta_id, SUM(profit) AS total_earnings " +
+                        "FROM StockAccountTransaction " +
+                        "JOIN StockAccount ON StockAccountTransaction.stock = StockAccount.stock " +
+                        "AND StockAccountTransaction.mkta_id = StockAccount.mkta_id " +
+                        "WHERE EXTRACT(MONTH FROM transaction_date) = ? " +
+                        "GROUP BY StockAccount.mkta_id";
+
         
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-//            statement.setString(1, monthString);
+            statement.setString(1, monthString);
             ResultSet resultSet = statement.executeQuery();
             while(resultSet.next()){
-                String username = resultSet.getString("username");
+                int username = resultSet.getInt("mkta_id");
                 float totalEarnings = resultSet.getFloat("total_earnings");
                 customerEarnings.put(username, totalEarnings);
             }
 
             //now we have a map of all customers and their total earnings
-            for(Map.Entry<String, Float> entry : customerEarnings.entrySet()){
+            for(Map.Entry<Integer, Float> entry : customerEarnings.entrySet()){
                 if(entry.getValue() >= 10000){
                     CustomerDAO customerDAO = new CustomerDAOImpl();
-                    Customer customer = customerDAO.getCustomer(entry.getKey());
+                    Customer customer = customerDAO.getCustomerByid(entry.getKey());
+                    
                     System.out.println("Customer Name: " + customer.getName());
                     System.out.println("Customer State: " + customer.getState());
                     System.out.println("--------------------");
@@ -361,7 +367,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         }
     }
 
-    public void main(String[] args) {
+    public static void main(String[] args) {
         // prompt manager for options and call the appropriate function
         // first manager needs to login
         ManagerInterfaceDAOImpl manager = new ManagerInterfaceDAOImpl();
@@ -381,8 +387,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                 System.out.println("Login failed. Try again.");
             }
         }
-
-        Scanner scanner2 = new Scanner(System.in);
+        
         CustomerDAOImpl customerDAO = new CustomerDAOImpl();
         System.out.println("What would you like to do?");
         System.out.println("1. Add Interest");
@@ -396,52 +401,55 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         System.out.println("8. Close market");
         System.out.println("9. Set a new price for the stock");
         System.out.println("10. Exit");
-        int choice = scanner2.nextInt();
+        int choice = scanner.nextInt();
+        scanner.nextLine();
         while(choice != 10){
             switch(choice){
                 case 1:
                     System.out.println("Enter the interest rate as a decimal: ");
-                    float interestRate = scanner2.nextFloat();
-                    addInterest(interestRate);
+                    float interestRate = scanner.nextFloat();
+                    scanner.nextLine();
+                    manager.addInterest(interestRate);
                     break;
                 case 2:
                     System.out.println("Enter the customer username: ");
-                    String customerUsername = scanner2.nextLine();
+                    String customerUsername = scanner.nextLine();
                     Customer customer = customerDAO.getCustomer(customerUsername);
-                    generateMonthlyStatement(customer);
+                    manager.generateMonthlyStatement(customer);
                     break;
                 case 3:
-                    listActiveCustomers();
+                    manager.listActiveCustomers();
                     break;
                 case 4:
-                    generateDTER();
+                    manager.generateDTER();
                     break;
                 case 5:
                     System.out.println("Enter the customer username: ");
-                    String customerUsername2 = scanner2.nextLine(); 
+                    String customerUsername2 = scanner.nextLine(); 
                     Customer customer2 = customerDAO.getCustomer(customerUsername2);
-                    customerReport(customer2);
+                    manager.customerReport(customer2);
                     break;
                 case 6:
                     System.out.println("Deleting all transactions...");
-                    deleteTransactions();
+                    manager.deleteTransactions();
                     break;
                 case 7:
                     System.out.println("What day would you like to open the market for?");
-                    String newDate = scanner2.nextLine();
-                    openMarket(newDate);
+                    String newDate = scanner.nextLine();
+                    manager.openMarket(newDate);
                     break;
                 case 8:
                     System.out.println("Closing market...");
-                    closeMarket();
+                    manager.closeMarket();
                     break;
                 case 9:
                     System.out.println("Enter the stock symbol: ");
-                    String stockSymbol = scanner2.nextLine();
+                    String stockSymbol = scanner.nextLine();
                     System.out.println("Enter the new price for the stock: ");
-                    float newPrice = scanner2.nextFloat();
+                    float newPrice = scanner.nextFloat();
+                    scanner.nextLine();
                     
-                    setStockPrice(stockSymbol, newPrice);
+                    manager.setStockPrice(stockSymbol, newPrice);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -460,11 +468,11 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println("9. Set a new price for the stock");
             System.out.println("10. Exit");
             choice = scanner.nextInt();
+            scanner.nextLine();
         }
         System.out.println("Goodbye!");
         //close scanner when 10 is selected
         scanner.close();
-        scanner2.close();
 
     }
 }

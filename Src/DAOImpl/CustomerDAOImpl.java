@@ -7,6 +7,8 @@ import Src.DbConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class CustomerDAOImpl implements CustomerDAO {
@@ -79,6 +81,55 @@ public class CustomerDAOImpl implements CustomerDAO {
 
     @Override
     public Customer getCustomer(String username) {
+        String query = "SELECT * FROM Customer WHERE username = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            String name = null;
+            String state = null;
+            String phone = null;
+            String email = null;
+            String taxID = null;
+            while(resultSet.next()) {
+                name = resultSet.getString("name");
+                state = resultSet.getString("state");
+                phone = resultSet.getString("phone");
+                email = resultSet.getString("email");
+                taxID = resultSet.getString("tax_id");
+            }
+            Customer customer = new Customer(name, state, phone, email, taxID, username, null);
+            return customer;
+        } catch (Exception e) {
+            System.out.println("ERROR: login failed.");
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    @Override
+    public Customer getCustomerByid(int id) {
+        String query = "SELECT Customer.username FROM Customer " +
+                        "JOIN MarketAccount ON Customer.username = MarketAccount.username " +
+                        "WHERE MarketAccount.mkta_id = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            String username = null;
+            String state = null;
+            while(resultSet.next()) {
+                username = resultSet.getString("username");
+                Customer customer = getCustomerByUsername(username);
+                return customer;
+            }
+            
+        } catch (Exception e) {
+            System.out.println("ERROR: login failed.");
+            System.out.println(e);
+        }
         return null;
     }
 }
