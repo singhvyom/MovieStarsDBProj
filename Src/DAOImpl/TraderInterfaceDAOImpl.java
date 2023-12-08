@@ -1,21 +1,19 @@
 package Src.DAOImpl;
-
-import java.util.Scanner;
+import Src.DAO.*;
 
 import Src.Customer;
-import Src.DAO.*;
 import Src.ActorProfileStock;
 import Src.Movie;
 import Src.StockAccountTransaction;
 import Src.MarketAccountTransaction;
 
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
     //implement functions in TraderInterfaceDAO
-    public void registerCustomer(String username){
+    public void registerCustomer(String username, Scanner scanner){
         // TODO Create a new customer in the database
-        Scanner scanner = new Scanner(System.in);
         System.out.println("Please enter your name: ");
         String name = scanner.nextLine();
         System.out.println("Please enter your state: ");
@@ -39,7 +37,6 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         else{
             System.out.println("Customer creation failed.");
         }
-        scanner.close();
     };
 
     public void login(String username, String password) {
@@ -228,7 +225,7 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         
     }
 
-    public void showMovieInformation(String movieTitle, int year){
+    public void showMovieInformation(String movieTitle, int year, Scanner scanner){
         // TODO Show information about the given movie
         ///then ask if they wanna see the top movies and if they want to display movie reviews
         MovieDAO movieDAO = new MovieDAOImpl();
@@ -251,14 +248,17 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         System.out.println();
         
         System.out.println("Would you like to see the top movies in a given time interval? (y/n)");
-        Scanner scanner = new Scanner(System.in);
+        
         String choice = scanner.nextLine();
+        //scanner.nextLine();
         if(choice.equals("y")){
             System.out.println("What year range would you like to see the top movies of?");
             System.out.println("Start year: ");
             int startYear = scanner.nextInt();
+            scanner.nextLine();
             System.out.println("End year: ");
             int endYear = scanner.nextInt();
+            scanner.nextLine();
             ArrayList<Movie> movies = movieDAO.getTopMoviesInTimeInterval(startYear, endYear);
             for(Movie m : movies) {
                 System.out.println(m.getTitle());
@@ -267,8 +267,12 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
                 System.out.println("No movies found in that time interval.");
             }
         }
+        if(choice.equals("n")){
+            //do nothing
+        }
         System.out.println("Would you like to see the reviews for this movie? (y/n)");
         String choice2 = scanner.nextLine();
+        scanner.nextLine();
         if(choice2.equals("y")){
             ArrayList<String> reviews = movieDAO.getAllMovieReviews(movie);
             for(String review : reviews) {
@@ -279,23 +283,25 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             }
         }
 
-        scanner.close();
-
+        
 
     }
 
-    public void main(String[] args) {
+    public static void main(String[] args) {
         // TODO Prompt user to make choices and call the appropriate functions
+        TraderInterfaceDAO traderInterfaceDAO = new TraderInterfaceDAOImpl();
         Scanner scanner = new Scanner(System.in);
         String username = ""; //used to access the customer that we want
         System.out.println("Welcome to the Trader Interface!");
         System.out.println("If you are a new user, please register.");
         System.out.println("Type 1 to register, or 2 to login.");
         int newUser = scanner.nextInt();
+        scanner.nextLine();
         while(newUser != 1 && newUser != 2){
             System.out.println("Invalid choice. Please try again.");
             System.out.println("Type 1 to register, or 2 to login.");
             newUser = scanner.nextInt();
+            scanner.nextLine();
         }
         if(newUser ==1){
             //register a new user
@@ -303,20 +309,18 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             //prompts in registerCustomer()
             System.out.println("Please create your username: ");
             username = scanner.nextLine();
-            registerCustomer(username);
-
+            traderInterfaceDAO.registerCustomer(username, scanner);
+            
         }
         else if(newUser == 2){
             System.out.println("Please enter your username: ");
             username = scanner.nextLine();
             System.out.println("Please enter your password: ");
             String password = scanner.nextLine();
-            login(username, password);
+            traderInterfaceDAO.login(username, password);
         }
         
-        scanner.close();
-        
-        Scanner scanner2 = new Scanner(System.in);
+       
         System.out.println("What would you like to do?");
         System.out.println("1. Deposit");
         System.out.println("2. Withdrawal");
@@ -329,62 +333,88 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         System.out.println("9. Show Actor Profile");
         System.out.println("10. Show Movie Information");
         System.out.println("11.Exit");
-        int choice = scanner2.nextInt();
+        int choice = scanner.nextInt();
+        //scanner2.nextLine();
+        
+        
+        
 
         while(choice != 11){
             switch(choice){
                 case 1:
                     System.out.println("How much would you like to deposit?");
-                    float amount = scanner2.nextFloat();
-                    deposit(amount, username);
+                    float amount = scanner.nextFloat();
+                    traderInterfaceDAO.deposit(amount, username);
                     break;
                 case 2:
                     System.out.println("How much would you like to withdraw?");
-                    float amount2 = scanner2.nextFloat();
-                    withdrawal(amount2, username);
+                    float amount2 = scanner.nextFloat();
+                    traderInterfaceDAO.withdrawal(amount2, username);
                     break;
                 case 3:
                     System.out.println("What stock would you like to buy?");
-                    String stockSymbol = scanner2.nextLine();
+                    String stockSymbol = scanner.nextLine();
+                    scanner.nextLine();
                     System.out.println("How many shares would you like to buy?");
-                    int quantity = scanner2.nextInt();
-                    buy(stockSymbol, quantity, username);
+                    int quantity = scanner.nextInt();
+                    scanner.nextLine();
+                    traderInterfaceDAO.buy(stockSymbol, quantity, username);
                     break;
                 case 4:
                     System.out.println("What stock would you like to sell?");
-                    String stockSymbol2 = scanner2.nextLine();
+                    String stockSymbol2 = scanner.nextLine();
+                    scanner.nextLine();
                     System.out.println("How many shares would you like to sell?");
-                    int quantity2 = scanner2.nextInt();
-                    //how to get purchase price of same stock?
-                    //sell(stockSymbol2, quantity2, username, purchasePrice = 0.0  );
+                    float quantity2 = scanner.nextFloat();
+                    scanner.nextLine();
+                    System.out.println("What was the purchase price of the stock?");
+                    float purchasePrice = scanner.nextFloat();
+                    scanner.nextLine();
+                    traderInterfaceDAO.sell(stockSymbol2, quantity2, username, purchasePrice);
+        
                     break;
                 case 5:
-                    System.out.println("What transaction would you like to cancel?");
-                    String transactionId = scanner2.nextLine();
-                    // cancel(transactionId);
+
+                    System.out.println("Would you like to cancel a stock transaction or a market transaction?");
+                    System.out.println("Type 1 for stock transaction, or 2 for market transaction.");
+                    int cancelChoice = scanner.nextInt();
+                    if(cancelChoice == 1){
+                        traderInterfaceDAO.cancelStockTransaction(username);
+                    }
+                    else if(cancelChoice == 2){
+                        traderInterfaceDAO.cancelMarketTransaction(username);
+                    }
+                    else{
+                        System.out.println("Invalid choice. Please try again.");
+                        break;
+                    }
+                
                     break;
                 case 6:
-                    showMarketAccountBalance(username);
+                    traderInterfaceDAO.showMarketAccountBalance(username);
                     break;
                 case 7:
-                    showTransactionHistory();
+                    traderInterfaceDAO.showTransactionHistory();
                     break;
                 case 8:
                     System.out.println("What stock would you like to get the current price of?");
-                    String stockSymbol3 = scanner2.nextLine();
-                    getCurrentStockPrice(stockSymbol3);
+                    String stockSymbol3 = scanner.nextLine();
+                    traderInterfaceDAO.getCurrentStockPrice(stockSymbol3);
                     break;
                 case 9:
                     System.out.println("What actor would you like to see the profile of?");
-                    String actorName = scanner2.nextLine();
-                    showActorProfile(actorName);
+                    String actorName = scanner.nextLine();
+                    scanner.nextLine();
+                    traderInterfaceDAO.showActorProfile(actorName);
                     break;
                 case 10:
                     System.out.println("What movie would you like to see information about?");
-                    String movieTitle = scanner2.nextLine();
+                    String movieTitle = scanner.nextLine();
+                    scanner.nextLine();
                     System.out.println("What year was the movie released?");
-                    int year = scanner2.nextInt();
-                    showMovieInformation(movieTitle, year);
+                    int year = scanner.nextInt();
+                    scanner.nextLine();
+                    traderInterfaceDAO.showMovieInformation(movieTitle, year, scanner);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -402,11 +432,11 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             System.out.println("9. Show Actor Profile");
             System.out.println("10. Show Movie Information");
             System.out.println("11.Exit");
-            choice = scanner2.nextInt();
+            choice = scanner.nextInt();
 
         }
         System.out.println("Thank you for using the Trader Interface!");
-        scanner2.close();
+        scanner.close();
 
         
     }

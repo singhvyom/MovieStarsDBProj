@@ -1,8 +1,9 @@
 package Src.DAO;
+import java.util.Scanner;
 
 public interface TraderInterfaceDAO {
     //implementation in TraderInterfaceImpl.java
-    public void registerCustomer(String username);
+    public void registerCustomer(String username, Scanner scanner);
     public void login(String username, String password);
     public void deposit(float amount, String username);
     public void withdrawal(float amount, String username);
@@ -14,7 +15,7 @@ public interface TraderInterfaceDAO {
     public void showTransactionHistory();
     public void getCurrentStockPrice(String stockSymbol);
     public void showActorProfile(String actorName);
-    public void showMovieInformation(String movieTitle, int year);
+    public void showMovieInformation(String movieTitle, int year, Scanner scanner);
     
     
 }
