@@ -225,32 +225,39 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         // including earnings from buying/selling stocks and interest. The residence state of each customer should
         // also be listed
         // query the db for all customers who have made more than $10,000 in the last month
-        Calendar calendar = Calendar.getInstance();
-        int currentMonth = calendar.get(Calendar.MONTH);
-        int currentYear = calendar.get(Calendar.YEAR);
-        String query = "SELECT c.customer_id, c.name, c.state, SUM(t.buy_shares) AS total_buy_shares, SUM(t.sell_shares) AS total_sell_shares, SUM(t.buy_shares * t.buy_price) AS total_buy_price, SUM(t.sell_shares * t.sell_price) AS total_sell_price " +
-                       "FROM Trades t " +
-                       "JOIN Customers c ON t.customer_id = c.customer_id " +
-                       "WHERE MONTH(t.trade_date) = ? AND YEAR(t.trade_date) = ? " +
-                       "GROUP BY c.customer_id " +
-                       "HAVING total_buy_price + total_sell_price >= 10000";
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        
+        Map<String, Float> customerEarnings = new HashMap<String, Float>();
+        String query = "SELECT sa.username, SUM(sat.profit) AS total_earnings " + 
+                        "FROM StockAccountTransaction sat " +
+                        "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " + 
+                        "WHERE EXTRACT(MONTH FROM sat.transaction_date) " +
+                        "GROUP BY sa.username"
         
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-            
-            statement.setInt(1, currentMonth);
-            statement.setInt(2, currentYear);
-
+            statement.setString(1, monthString);
             ResultSet resultSet = statement.executeQuery();
             while(resultSet.next()){
-                System.out.println("Customer ID: " + resultSet.getInt("customer_id"));
-                System.out.println("Customer Name: " + resultSet.getString("name"));
-                System.out.println("Residence State: " + resultSet.getString("state"));
-                System.out.println("--------------------");
+                String username = resultSet.getString("username");
+                float totalEarnings = resultSet.getFloat("total_earnings");
+                customerEarnings.put(username, totalEarnings);
             }
-            if(!resultSet.next()){
-                System.out.println("No customers have made more than $10,000 in the last month.");
+
+            //now we have a map of all customers and their total earnings
+            for(Map.Entry<String, Float> entry : customerEarnings.entrySet()){
+                if(entry.getValue() >= 10000){
+                    CustomerDAO customerDAO = new CustomerDAOImpl();
+                    Customer customer = customerDAO.getCustomer(entry.getKey());
+                    System.out.println("Customer Name: " + customer.getName());
+                    System.out.println("Customer State: " + customer.getState());
+                    System.out.println("--------------------");
+                }
             }
         }catch(Exception e){
             System.out.println("ERROR: generating DTER failed.");
