@@ -105,4 +105,16 @@ public class StockAccountDAOImpl implements StockAccountDAO {
             System.out.println(e);
         }
     }
+
+    @Override
+    public void showEarnings(int mkta_id) {
+        //make sure its only for the current month
+        //so go get each stock acc transaction within the month
+        //then just sum the profits
+        //then have to account for difference in shares the customer owns
+        //+ interest in marketaccount
+        SysInfoDAOImpl sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        
+    }
 }

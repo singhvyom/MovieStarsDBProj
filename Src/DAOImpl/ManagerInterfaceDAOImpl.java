@@ -77,58 +77,113 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         }
 
     }
-    
+    private ResultSet getMarketAccountTransactions(String username){
+       
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+
+        String query = "SELECT * FROM MarketAccountTransaction WHERE mkta_id = ? AND EXTRACT(MONTH FROM transaction_date) = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, mkta_id);
+            statement.setString(2, monthString);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet;
+        }catch(Exception e){
+            System.out.println("ERROR: getting market account transactions failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+    }
+
+    private ResultSet getStockAccountTransactions(String username){
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+
+        String query = "SELECT * FROM StockAccountTransaction WHERE mkta_id = ? AND EXTRACT(MONTH FROM transaction_date) = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);   
+            statement.setInt(1, mkta_id);
+            statement.setString(2, monthString);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet;
+        }catch(Exception e){
+            System.out.println("ERROR: getting stock account transactions failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+    }
+
     public void generateMonthlyStatement(Customer customer) {
+
+        //first check if the customer has a market account
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(customer.getUsername());
+        if(mkta_id == -1){
+            System.out.println("No market account found for this customer.");
+            return;
+        }
         // TODO: Given a customer, do the following for each account she/he owns: generate a list of all transactions
         // that have occurred in the current month. This statement should list the name and email address of the
         // customer.
         // The initial and final account balance is to be included, so are the total earning/loss (including interest)
         // this month and the total amount of commissions paid.
         // The statement will be displayed in your interface.
+        
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        String username = customer.getUsername();
         System.out.println("Customer Name: " + customer.getName());
         System.out.println("Customer Email: " + customer.getEmail());
-        try{
-            Connection connection = DbConnection.getConnection();
+        System.out.println("Account Statements: ");
+        //TODO: first get the market account initial balance
+        //then get the market account final balance
+        //then get the total earnings/loss (so just profit), will sum up all profits of all stocks
 
-            //first get the market account
-            String marketAccQuery = "SELECT * FROM MarketAccount WHERE username = ?";
-            PreparedStatement marketAccStatement = connection.prepareStatement(marketAccQuery);
-            marketAccStatement.setString(1, customer.getUsername());
-            ResultSet marketAccResultSet = marketAccStatement.executeQuery();
-
-            while(marketAccResultSet.next()){
-                int mktaID = marketAccResultSet.getInt("mkta_id");
-                //now get the transactions for this month
-                Calendar calendar = Calendar.getInstance();
-                int currentMonth = calendar.get(Calendar.MONTH);
-                int currentYear = calendar.get(Calendar.YEAR);
-                String transactionQuery = "SELECT * FROM MarketAccountTransaction WHERE mkta_id = ? AND MONTH(transaction_date) = MONTH(CURDATE())";
-                PreparedStatement transactionStatement = connection.prepareStatement(transactionQuery);
-                transactionStatement.setInt(1, mktaID);
-                ResultSet transactionResultSet = transactionStatement.executeQuery();
-                while(transactionResultSet.next()){
-                    System.out.println("Transaction ID: " + transactionResultSet.getInt("transaction_id"));
-                    System.out.println("Transaction Date: " + transactionResultSet.getDate("transaction_date"));
-                    System.out.println("Amount: " + transactionResultSet.getFloat("amount"));
-                    System.out.println("--------------------");
-                }
-                //Calculate initial and final acccount balance current calc prob not correct
-                System.out.println("Initial Account Balance: " + marketAccResultSet.getFloat("balance"));
-                System.out.println("Final Account Balance: " + marketAccResultSet.getFloat("balance") + marketAccResultSet.getFloat("balance") * (1 + marketAccResultSet.getFloat("interest_rate")));
-                
-            }
-            if(!marketAccResultSet.next()){
-                System.out.println("No market account found for this customer.");
-            }
-            //need to do same for stock accounts, can be found with the same mkta_id. 
-            //if market account is not found, then no stock accounts will be found either
-
-        }catch(Exception e){
-            System.out.println("ERROR: generating monthly statement failed.");
-            e.printStackTrace();
-            System.out.println(e);
+        //then get the total amount of commissions paid
+        //then list each transaction (id, amount, type)
+        ResultSet marketAccountTransactions = getMarketAccountTransactions(username);
+        while(marketAccountTransactions.next()){
+            int transaction_id = marketAccountTransactions.getInt("transaction_id");
+            float amount = marketAccountTransactions.getFloat("amount");
+            String type = marketAccountTransactions.getString("type");
+            System.out.println("Transaction ID: " + transaction_id);
+            System.out.println("Amount: " + amount);
+            System.out.println("Type: " + type);
         }
 
+        //now show the tranasctions for each stock account
+
+        ResultSet stockAccountTransactions = getStockAccountTransactions(username);
+        while(stockAccountTransactions.next()){
+            int transaction_id = stockAccountTransactions.getInt("transaction_id");
+            float shares = stockAccountTransactions.getFloat("shares");
+            String stock = stockAccountTransactions.getString("stock");
+            String type = stockAccountTransactions.getString("type");
+            String date = stockAccountTransactions.getString("transaction_date");
+            System.out.println("Transaction ID: " + transaction_id);
+            System.out.println("Stock: " + stock);
+            System.out.println("Shares: " + shares);
+            System.out.println("Type: " + type);
+            System.out.println("Date: " + date);
+        }
+
+        //now to get total amount of commission
 
     }
     
@@ -188,18 +243,17 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         int mkta_id = marketAccountDAO.getMarketAccountId(username);
         if(mkta_id == -1){
             System.out.println("No market account found for this customer.");
+            return;
         }
         else{
             //get the market account balance
             float marketAccountBalance = marketAccountDAO.getBalance(username);
             System.out.println("Market Account Balance: " + marketAccountBalance);
+            //now for stock acc
+            System.out.println("Stock Account Balances: ");
+            StockAccountDAOImpl stockAccountDAO = new StockAccountDAOImpl();
+            stockAccountDAO.showAllShares(mkta_id);
         }
-        //now for stock acc
-        System.out.println("Stock Account Balances: ");
-        StockAccountDAOImpl stockAccountDAO = new StockAccountDAOImpl();
-        stockAccountDAO.showAllShares(mkta_id);
-        
-        
     }
     
     public void deleteTransactions(){
@@ -267,8 +321,6 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         
     }
     public void openMarket(String newDate){
-        //what does this mean
-        //per piazza can merge with set currrent date
         // open market on date. set is_open to true, set market_date to date
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         boolean open = sysInfoDAO.openMarket(newDate);

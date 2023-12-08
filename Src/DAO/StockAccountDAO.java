@@ -6,4 +6,5 @@ public interface StockAccountDAO {
     boolean updateShares(String stock, int mkta_id, float shares);
     float getShares(String stock, int mkta_id);
     void showAllShares(int mkta_id);
+    void showEarnings(int mkta_id);
 }
