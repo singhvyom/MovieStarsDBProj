@@ -166,3 +166,12 @@ CREATE TABLE SysInfo
 );
 
 Commit;
+
+CREATE TABLE DailyStockPrice
+(
+    stock varchar2(3),
+    day date,
+    closing_price float,
+    PRIMARY KEY (stock, day),
+    FOREIGN KEY (stock) REFERENCES ActorProfileStock(stock_symbol)
+);
