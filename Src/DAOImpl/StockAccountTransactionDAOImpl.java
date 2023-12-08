@@ -8,20 +8,21 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 public class StockAccountTransactionDAOImpl implements StockAccountTransactionDAO {
 
     public static void main(String[] args) {
         StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction("BCL", 1, 10, "buy", "2020-12-12", 100);
-        stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction("BCL", 1, 10, "buy", 0);
+//        stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
         StockAccountTransaction s = stockAccountTransactionDAO.cancelStockAccountTransaction(1);
         System.out.println(s.getShares() + " " + s.getStock());
     }
 
     @Override
     public boolean createStockAccountTransaction(StockAccountTransaction stockAccountTransaction) {
-        String query = "INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_date, profit)VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, profit, transaction_date)VALUES (?, ?, ?, ?, ?, (SELECT market_date FROM SysInfo))";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -29,8 +30,7 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
             statement.setInt(2, stockAccountTransaction.getMkta_id());
             statement.setFloat(3, stockAccountTransaction.getShares());
             statement.setString(4, stockAccountTransaction.getType());
-            statement.setDate(5, java.sql.Date.valueOf(stockAccountTransaction.getDate()));
-            statement.setFloat(6, stockAccountTransaction.getProfit());
+            statement.setFloat(5, stockAccountTransaction.getProfit());
             statement.executeUpdate();
             return true;
         } catch (Exception e) {
@@ -43,8 +43,10 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
 
     @Override
     public StockAccountTransaction cancelStockAccountTransaction(int mkta_id) {
-        String selectQuery = "SELECT * FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from StockAccountTransaction WHERE mkta_id = ?)";
-        String deleteQuery = "DELETE FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from StockAccountTransaction WHERE mkta_id = ?)";
+        String selectQuery = "SELECT * FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from " +
+                "StockAccountTransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo))";
+        String deleteQuery = "DELETE FROM StockAccountTransaction where transaction_id = (select max(transaction_id) from " +
+                "StockAccountTransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo))";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);
@@ -84,6 +86,32 @@ public class StockAccountTransactionDAOImpl implements StockAccountTransactionDA
             System.out.println(e);
         }
         return false;
+    }
+
+    @Override
+    public ArrayList<StockAccountTransaction> getStockAccountTransactions(int mkta_id) {
+        String query = "SELECT * FROM StockAccountTransaction WHERE mkta_id = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, mkta_id);
+            ResultSet resultSet = statement.executeQuery();
+            ArrayList<StockAccountTransaction> stockAccountTransactions = new ArrayList<>();
+            while(resultSet.next()) {
+                String stock = resultSet.getString("stock");
+                int mkta_id1 = resultSet.getInt("mkta_id");
+                float shares = resultSet.getFloat("shares");
+                String type = resultSet.getString("type");
+                float profit = resultSet.getFloat("profit");
+                StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stock, mkta_id1, shares, type, profit);
+                stockAccountTransactions.add(stockAccountTransaction);
+            }
+            return stockAccountTransactions;
+        } catch (Exception e) {
+            System.out.println("ERROR: getStockAccountTransactions failed.");
+            System.out.println(e);
+        }
+        return null;
     }
 
 }

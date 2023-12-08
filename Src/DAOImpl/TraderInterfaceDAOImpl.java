@@ -1,31 +1,14 @@
 package Src.DAOImpl;
-
-import java.util.Scanner;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import Src.Customer;
+import Src.*;
 import Src.DAO.*;
-import Src.DbConnection;
-import Src.DAOImpl.MarketAccountDAOImpl;
-import Src.DAOImpl.MarketAccountTransactionDAOImpl;
-import Src.DAOImpl.ActorProfileStockDAOImpl;
-import Src.ActorProfileStock;
-import Src.DAOImpl.MovieDAOImpl;
-import Src.Movie;
-import Src.StockAccountTransaction;
-import Src.MarketAccount;
-import Src.MarketAccountTransaction;
 
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
     //implement functions in TraderInterfaceDAO
-    public void registerCustomer(String username){
+    public void registerCustomer(String username, Scanner scanner){
         // TODO Create a new customer in the database
-        Scanner scanner = new Scanner(System.in);
         System.out.println("Please enter your name: ");
         String name = scanner.nextLine();
         System.out.println("Please enter your state: ");
@@ -48,8 +31,32 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         }
         else{
             System.out.println("Customer creation failed.");
+            return;
         }
-        scanner.close();
+
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+
+        System.out.println("Now creating your market account...");
+        System.out.println("Please enter a unique market account id: ");
+        int mkta_id = scanner.nextInt();
+        scanner.nextLine();
+        System.out.println("Please enter your initial balance (minimum $1000): ");
+        float balance = scanner.nextFloat();
+        scanner.nextLine();
+        while(balance < 1000.0) {
+            System.out.println("Initial balance must be at least $1000. Please enter a new balance: ");
+            balance = scanner.nextFloat();
+            scanner.nextLine();
+        }
+        MarketAccount marketAccount = new MarketAccount(username, mkta_id, balance);
+        boolean mktaSuccess = marketAccountDAO.createMarketAccount(marketAccount);
+        if(mktaSuccess){
+            System.out.println("Market account created successfully!");
+        }
+        else{
+            System.out.println("Market account creation failed.");
+        }
+
     };
 
     public void login(String username, String password) {
@@ -70,7 +77,7 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         MarketAccountTransactionDAO marketAccountTransactionDDO = new MarketAccountTransactionDAOImpl();
         marketAccountDAO.updateBalance(username, amount);
         int mkta_id = marketAccountDAO.getMarketAccountId(username);
-        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "deposit", "2020-12-12");
+        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "deposit");
         marketAccountTransactionDDO.createMarketAccountTransaction(transaction);
     }
 
@@ -80,7 +87,7 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         MarketAccountTransactionDAO marketAccountTransactionDDO = new MarketAccountTransactionDAOImpl();
         marketAccountDAO.updateBalance(username, -amount);
         int mkta_id = marketAccountDAO.getMarketAccountId(username);
-        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "withdrawal", "2020-12-12");
+        MarketAccountTransaction transaction = new MarketAccountTransaction(mkta_id, amount, "withdrawal");
         marketAccountTransactionDDO.createMarketAccountTransaction(transaction);
     }
 
@@ -107,9 +114,11 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
 
         marketAccountDAO.updateBalance(username, -totalCost-20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, quantity);
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, quantity, "buy", "2020-12-12");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "buy");
         marketAccountTransactionDDO.createMarketAccountTransaction(marketAccountTransaction);
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "buy", "2020-12-12", 0);
+        MarketAccountTransaction commission = new MarketAccountTransaction(mkta_id, 20, "commission");
+        marketAccountTransactionDDO.createMarketAccountTransaction(commission);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, quantity, "buy", 0);
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
     }
 
@@ -124,17 +133,19 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         int mkta_id = marketAccountDAO.getMarketAccountId(username);
 
         float currentPrice = actorProfileStockDAO.getActorProfileStock(stockSymbol).getCurrentPrice();
-        float totalCost = currentPrice * quantity;
+        float totalAmount = currentPrice * quantity;
         if(stockAccountDAO.getShares(stockSymbol, mkta_id) < quantity) {
             System.out.println("Insufficient funds.");
             return;
         }
 
-        marketAccountDAO.updateBalance(username, totalCost-20);
+        marketAccountDAO.updateBalance(username, totalAmount -20);
         stockAccountDAO.updateShares(stockSymbol, mkta_id, -quantity);
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalCost, "sell", "2020-12-12");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(mkta_id, totalAmount, "sell");
         marketAccountTransactionDDO.createMarketAccountTransaction(marketAccountTransaction);
-        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, totalCost, "sell", "2020-12-12", totalCost-purchasePrice);
+        MarketAccountTransaction commission = new MarketAccountTransaction(mkta_id, 20, "commission");
+        marketAccountTransactionDDO.createMarketAccountTransaction(commission);
+        StockAccountTransaction stockAccountTransaction = new StockAccountTransaction(stockSymbol, mkta_id, quantity, "sell", totalAmount -purchasePrice);
         stockAccountTransactionDAO.createStockAccountTransaction(stockAccountTransaction);
     }
 
@@ -159,7 +170,9 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         else if(deletedTransaction.getType().equals("withdrawal") || deletedTransaction.getType().equals("buy")){
             marketAccountDAO.updateBalance(username, deletedTransaction.getAmount());
         }
-        marketAccountDAO.updateBalance(username, 20);
+        MarketAccountTransaction commission = new MarketAccountTransaction(mkta_id, 20, "commission");
+        marketAccountTransactionDDO.createMarketAccountTransaction(commission);
+        marketAccountDAO.updateBalance(username, -20);
     }
 
     @Override
@@ -196,15 +209,17 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         System.out.println("Your market account balance is: " + marketAccountBalance);
     }
 
-    public void showTransactionHistory(){
-        //would show the entire list of transactions for stock account
-         
-        
-        
+    public void showTransactionHistory(String username){
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+        StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
+        ArrayList<StockAccountTransaction> stockAccountTransactions = stockAccountTransactionDAO.getStockAccountTransactions(mkta_id);
+        for(StockAccountTransaction stockAccountTransaction : stockAccountTransactions){
+            System.out.println(stockAccountTransaction);
+        }
     }
 
     public void getCurrentStockPrice(String stockSymbol){
-        // TODO Return the current price of the given stock
         ActorProfileStockDAO actorProfileStockDAO = new ActorProfileStockDAOImpl();
         ActorProfileStock actorProfileStock = actorProfileStockDAO.getActorProfileStock(stockSymbol);
         if(actorProfileStock == null){
@@ -216,24 +231,20 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
 
     }
 
-    public void showActorProfile(String actorName){
-        // TODO Show the profile of the given actor
-        //should this be asking for the stock symbol instead?
-        //currently implemented as if it was a stock symbol
+    public void showActorProfile(String stockSymbol){
         //shows current price of their stock and their name, dob, and stock symbol
         ActorProfileStockDAO actorProfileStockDAO = new ActorProfileStockDAOImpl();
-        ActorProfileStock actorProfileStock = actorProfileStockDAO.getActorProfileStock(actorName); 
+        ActorProfileStock actorProfileStock = actorProfileStockDAO.getActorProfileStock(stockSymbol);
         if(actorProfileStock == null){
             System.out.println("Actor not found.");
         }
         else{
-            actorProfileStock.toString();
+            System.out.println(actorProfileStock);
         }
         
     }
 
-    public void showMovieInformation(String movieTitle, int year){
-        // TODO Show information about the given movie
+    public void showMovieInformation(String movieTitle, int year, Scanner scanner){
         ///then ask if they wanna see the top movies and if they want to display movie reviews
         MovieDAO movieDAO = new MovieDAOImpl();
         Movie movie = new Movie(movieTitle, year);
@@ -254,19 +265,28 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         }
         System.out.println();
         
-        System.out.println("Would you like to see the top movies in this time interval? (y/n)");
-        Scanner scanner = new Scanner(System.in);
+        System.out.println("Would you like to see the top movies in a given time interval? (y/n)");
+        
         String choice = scanner.nextLine();
+        //scanner.nextLine();
         if(choice.equals("y")){
             System.out.println("What year range would you like to see the top movies of?");
             System.out.println("Start year: ");
             int startYear = scanner.nextInt();
+            scanner.nextLine();
             System.out.println("End year: ");
             int endYear = scanner.nextInt();
+            scanner.nextLine();
             ArrayList<Movie> movies = movieDAO.getTopMoviesInTimeInterval(startYear, endYear);
             for(Movie m : movies) {
                 System.out.println(m.getTitle());
             }
+            if(movies.size() == 0){
+                System.out.println("No movies found in that time interval.");
+            }
+        }
+        if(choice.equals("n")){
+            //do nothing
         }
         System.out.println("Would you like to see the reviews for this movie? (y/n)");
         String choice2 = scanner.nextLine();
@@ -275,25 +295,30 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             for(String review : reviews) {
                 System.out.println(review);
             }
+            if(reviews.isEmpty()){
+                System.out.println("No reviews found for this movie.");
+            }
         }
 
-        scanner.close();
-
+        
 
     }
 
-    public void main(String[] args) {
+    public static void main(String[] args) {
         // TODO Prompt user to make choices and call the appropriate functions
+        TraderInterfaceDAO traderInterfaceDAO = new TraderInterfaceDAOImpl();
         Scanner scanner = new Scanner(System.in);
         String username = ""; //used to access the customer that we want
         System.out.println("Welcome to the Trader Interface!");
         System.out.println("If you are a new user, please register.");
         System.out.println("Type 1 to register, or 2 to login.");
         int newUser = scanner.nextInt();
+        scanner.nextLine();
         while(newUser != 1 && newUser != 2){
             System.out.println("Invalid choice. Please try again.");
             System.out.println("Type 1 to register, or 2 to login.");
             newUser = scanner.nextInt();
+            scanner.nextLine();
         }
         if(newUser ==1){
             //register a new user
@@ -301,20 +326,18 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             //prompts in registerCustomer()
             System.out.println("Please create your username: ");
             username = scanner.nextLine();
-            registerCustomer(username);
-
+            traderInterfaceDAO.registerCustomer(username, scanner);
+            
         }
         else if(newUser == 2){
             System.out.println("Please enter your username: ");
             username = scanner.nextLine();
             System.out.println("Please enter your password: ");
             String password = scanner.nextLine();
-            login(username, password);
+            traderInterfaceDAO.login(username, password);
         }
         
-        scanner.close();
-        
-        Scanner scanner2 = new Scanner(System.in);
+       
         System.out.println("What would you like to do?");
         System.out.println("1. Deposit");
         System.out.println("2. Withdrawal");
@@ -327,62 +350,85 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         System.out.println("9. Show Actor Profile");
         System.out.println("10. Show Movie Information");
         System.out.println("11.Exit");
-        int choice = scanner2.nextInt();
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        //scanner2.nextLine();
+        
+        
+        
 
         while(choice != 11){
             switch(choice){
                 case 1:
                     System.out.println("How much would you like to deposit?");
-                    float amount = scanner2.nextFloat();
-                    deposit(amount, username);
+                    float amount = scanner.nextFloat();
+                    traderInterfaceDAO.deposit(amount, username);
                     break;
                 case 2:
                     System.out.println("How much would you like to withdraw?");
-                    float amount2 = scanner2.nextFloat();
-                    withdrawal(amount2, username);
+                    float amount2 = scanner.nextFloat();
+                    traderInterfaceDAO.withdrawal(amount2, username);
                     break;
                 case 3:
                     System.out.println("What stock would you like to buy?");
-                    String stockSymbol = scanner2.nextLine();
+                    String stockSymbol = scanner.nextLine();
                     System.out.println("How many shares would you like to buy?");
-                    int quantity = scanner2.nextInt();
-                    buy(stockSymbol, quantity, username);
+                    float quantity = scanner.nextFloat();
+                    scanner.nextLine();
+                    traderInterfaceDAO.buy(stockSymbol, quantity, username);
                     break;
                 case 4:
                     System.out.println("What stock would you like to sell?");
-                    String stockSymbol2 = scanner2.nextLine();
+                    String stockSymbol2 = scanner.nextLine();
                     System.out.println("How many shares would you like to sell?");
-                    int quantity2 = scanner2.nextInt();
-                    //how to get purchase price of same stock?
-                    //sell(stockSymbol2, quantity2, username, purchasePrice = 0.0  );
+                    float quantity2 = scanner.nextFloat();
+                    scanner.nextLine();
+                    System.out.println("What was the purchase price of the stock?");
+                    float purchasePrice = scanner.nextFloat();
+                    scanner.nextLine();
+                    traderInterfaceDAO.sell(stockSymbol2, quantity2, username, purchasePrice);
+        
                     break;
                 case 5:
-                    System.out.println("What transaction would you like to cancel?");
-                    String transactionId = scanner2.nextLine();
-                    // cancel(transactionId);
+
+                    System.out.println("Would you like to cancel a stock transaction or a market transaction?");
+                    System.out.println("Type 1 for stock transaction, or 2 for market transaction.");
+                    int cancelChoice = scanner.nextInt();
+                    if(cancelChoice == 1){
+                        traderInterfaceDAO.cancelStockTransaction(username);
+                    }
+                    else if(cancelChoice == 2){
+                        traderInterfaceDAO.cancelMarketTransaction(username);
+                    }
+                    else{
+                        System.out.println("Invalid choice. Please try again.");
+                        break;
+                    }
+                
                     break;
                 case 6:
-                    showMarketAccountBalance(username);
+                    traderInterfaceDAO.showMarketAccountBalance(username);
                     break;
                 case 7:
-                    showTransactionHistory();
+                    traderInterfaceDAO.showTransactionHistory(username);
                     break;
                 case 8:
                     System.out.println("What stock would you like to get the current price of?");
-                    String stockSymbol3 = scanner2.nextLine();
-                    getCurrentStockPrice(stockSymbol3);
+                    String stockSymbol3 = scanner.nextLine();
+                    traderInterfaceDAO.getCurrentStockPrice(stockSymbol3);
                     break;
                 case 9:
-                    System.out.println("What actor would you like to see the profile of?");
-                    String actorName = scanner2.nextLine();
-                    showActorProfile(actorName);
+                    System.out.println("What actor would you like to see the profile of? (Enter stock symbol)");
+                    String actorName = scanner.nextLine();
+                    traderInterfaceDAO.showActorProfile(actorName);
                     break;
                 case 10:
                     System.out.println("What movie would you like to see information about?");
-                    String movieTitle = scanner2.nextLine();
+                    String movieTitle = scanner.nextLine();
                     System.out.println("What year was the movie released?");
-                    int year = scanner2.nextInt();
-                    showMovieInformation(movieTitle, year);
+                    int year = scanner.nextInt();
+                    scanner.nextLine();
+                    traderInterfaceDAO.showMovieInformation(movieTitle, year, scanner);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -400,11 +446,12 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             System.out.println("9. Show Actor Profile");
             System.out.println("10. Show Movie Information");
             System.out.println("11.Exit");
-            choice = scanner2.nextInt();
+            choice = scanner.nextInt();
+            scanner.nextLine();
 
         }
         System.out.println("Thank you for using the Trader Interface!");
-        scanner2.close();
+        scanner.close();
 
         
     }

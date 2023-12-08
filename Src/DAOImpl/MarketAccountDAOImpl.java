@@ -21,7 +21,6 @@ public class MarketAccountDAOImpl implements MarketAccountDAO {
 
     @Override
     public boolean createMarketAccount(MarketAccount marketAccount) {
-        // TODO Check that initial balance is >= 1000 idk where to do this
         String query = "INSERT INTO MarketAccount(username, mkta_id, balance) VALUES (?,?,?)";
         try {
             Connection connection = DbConnection.getConnection();

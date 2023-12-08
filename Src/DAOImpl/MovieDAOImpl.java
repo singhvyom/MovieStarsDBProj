@@ -127,7 +127,7 @@ public class MovieDAOImpl implements MovieDAO {
         String query = "SELECT avg(rating) as avg_rating, title, year\n" +
                 "FROM Review\n" +
                 "GROUP BY (title, year)\n" +
-                "HAVING avg(rating) >= 5 and year >= ? and year <= ?";
+                "HAVING avg(rating) >= 10 and year >= ? and year <= ?";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);

@@ -1,17 +1,24 @@
 package Src.DAOImpl;
 import Src.DAO.CustomerDAO;
-import Src.DAOImpl.CustomerDAOImpl;
 import Src.DAO.ManagerInterfaceDAO;
 import Src.Customer;
+
+import java.util.Map;
 import java.util.Scanner;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Calendar;
+
 import Src.DbConnection;
 import Src.ActorProfileStock;
 import Src.DAO.ActorProfileStockDAO;
-import Src.DAOImpl.ActorProfileStockDAOImpl;
+import Src.DAO.SysInfoDAO;
+import Src.DAO.MarketAccountTransactionDAO;
+import Src.DAO.StockAccountTransactionDAO;
+import Src.DAO.MarketAccountDAO;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
@@ -44,9 +51,11 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         // TODO: For all market accounts, add the appropriate amount of monthly interest to the balance.
         // This can only be done at the last business day of a month.
         // manager gets to set the interest rate
-        Calendar calendar = Calendar.getInstance();
-        int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
-        int lastDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int currentDay = date.getDayOfMonth();
+        int lastDay = date.lengthOfMonth();
         if(currentDay != lastDay){
             System.out.println("ERROR: cannot add interest until the last day of the month.");
             return;
@@ -66,58 +75,124 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         }
 
     }
-    
+    private ResultSet getMarketAccountTransactions(String username){
+       
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+
+        String query = "SELECT * FROM MarketAccountTransaction WHERE mkta_id = ? AND EXTRACT(MONTH FROM transaction_date) = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, mkta_id);
+            statement.setString(2, monthString);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet;
+        }catch(Exception e){
+            System.out.println("ERROR: getting market account transactions failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    private ResultSet getStockAccountTransactions(String username){
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+
+        String query = "SELECT * FROM StockAccountTransaction WHERE mkta_id = ? AND EXTRACT(MONTH FROM transaction_date) = ?";
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);   
+            statement.setInt(1, mkta_id);
+            statement.setString(2, monthString);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet;
+        }catch(Exception e){
+            System.out.println("ERROR: getting stock account transactions failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
+        return null;
+    }
+
     public void generateMonthlyStatement(Customer customer) {
+
+        //first check if the customer has a market account
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(customer.getUsername());
+        if(mkta_id == -1){
+            System.out.println("No market account found for this customer.");
+            return;
+        }
         // TODO: Given a customer, do the following for each account she/he owns: generate a list of all transactions
         // that have occurred in the current month. This statement should list the name and email address of the
         // customer.
         // The initial and final account balance is to be included, so are the total earning/loss (including interest)
         // this month and the total amount of commissions paid.
         // The statement will be displayed in your interface.
+        
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        String username = customer.getUsername();
         System.out.println("Customer Name: " + customer.getName());
         System.out.println("Customer Email: " + customer.getEmail());
-        try{
-            Connection connection = DbConnection.getConnection();
+        System.out.println("Account Statements: ");
+        //TODO: first get the market account initial balance
+        //then get the market account final balance
+        //then get the total earnings/loss (so just profit), will sum up all profits of all stocks
 
-            //first get the market account
-            String marketAccQuery = "SELECT * FROM MarketAccount WHERE username = ?";
-            PreparedStatement marketAccStatement = connection.prepareStatement(marketAccQuery);
-            marketAccStatement.setString(1, customer.getUsername());
-            ResultSet marketAccResultSet = marketAccStatement.executeQuery();
-
-            while(marketAccResultSet.next()){
-                int mktaID = marketAccResultSet.getInt("mkta_id");
-                //now get the transactions for this month
-                Calendar calendar = Calendar.getInstance();
-                int currentMonth = calendar.get(Calendar.MONTH);
-                int currentYear = calendar.get(Calendar.YEAR);
-                String transactionQuery = "SELECT * FROM MarketAccountTransaction WHERE mkta_id = ? AND MONTH(transaction_date) = MONTH(CURDATE())";
-                PreparedStatement transactionStatement = connection.prepareStatement(transactionQuery);
-                transactionStatement.setInt(1, mktaID);
-                ResultSet transactionResultSet = transactionStatement.executeQuery();
-                while(transactionResultSet.next()){
-                    System.out.println("Transaction ID: " + transactionResultSet.getInt("transaction_id"));
-                    System.out.println("Transaction Date: " + transactionResultSet.getDate("transaction_date"));
-                    System.out.println("Amount: " + transactionResultSet.getFloat("amount"));
-                    System.out.println("--------------------");
-                }
-                //Calculate initial and final acccount balance current calc prob not correct
-                System.out.println("Initial Account Balance: " + marketAccResultSet.getFloat("balance"));
-                System.out.println("Final Account Balance: " + marketAccResultSet.getFloat("balance") + marketAccResultSet.getFloat("balance") * (1 + marketAccResultSet.getFloat("interest_rate")));
-                
+        //then get the total amount of commissions paid
+        //then list each transaction (id, amount, type)
+        try (ResultSet marketAccountTransactions = getMarketAccountTransactions(username)) {
+            while (marketAccountTransactions.next()) {
+                int transaction_id = marketAccountTransactions.getInt("transaction_id");
+                float amount = marketAccountTransactions.getFloat("amount");
+                String type = marketAccountTransactions.getString("type");
+                System.out.println("Transaction ID: " + transaction_id);
+                System.out.println("Amount: " + amount);
+                System.out.println("Type: " + type);
             }
-            if(!marketAccResultSet.next()){
-                System.out.println("No market account found for this customer.");
-            }
-            //need to do same for stock accounts, can be found with the same mkta_id. 
-            //if market account is not found, then no stock accounts will be found either
 
-        }catch(Exception e){
-            System.out.println("ERROR: generating monthly statement failed.");
+            ResultSet stockAccountTransactions = getStockAccountTransactions(username);
+            while(stockAccountTransactions.next()){
+                int transaction_id = stockAccountTransactions.getInt("transaction_id");
+                float shares = stockAccountTransactions.getFloat("shares");
+                String stock = stockAccountTransactions.getString("stock");
+                String type = stockAccountTransactions.getString("type");
+                String transactionDate = stockAccountTransactions.getString("transaction_date");
+                System.out.println("Transaction ID: " + transaction_id);
+                System.out.println("Stock: " + stock);
+                System.out.println("Shares: " + shares);
+                System.out.println("Type: " + type);
+                System.out.println("Date: " + transactionDate);
+                System.out.println("--------------------");
+            }
+
+        } catch (Exception e) {
+            System.out.println("ERROR: listing market account transactions failed.");
             e.printStackTrace();
             System.out.println(e);
         }
 
+        //now show the tranasctions for each stock account
+
+
+
+        //now to get total amount of commission
 
     }
     
@@ -125,32 +200,38 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         //TODO: Generate a list of all customers who have traded (buy or sell) at least 1,000 shares in the current month
         //need to sum up the number of shares bought and sold for each customer
         //query the db for all customers who have traded at least 1,000 shares in the current month
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        //now for every customer, sum up numbrt of 'shares' for every
+        //stock market transaction. display names if sum is greater than 1000
+        Map<String, Float> customerShares = new HashMap<String, Float>();
 
-        Calendar calendar = Calendar.getInstance(); 
-        int currentMonth = calendar.get(Calendar.MONTH);
-        int currentYear = calendar.get(Calendar.YEAR);
-        String query = "SELECT customer_id, SUM(buy_shares) AS total_buy_shares, SUM(sell_shares) AS total_sell_shares " +
-                       "FROM Trades " +
-                       "WHERE MONTH(trade_date) = ? AND YEAR(trade_date) = ? " +
-                       "GROUP BY customer_id " +
-                       "HAVING total_buy_shares + total_sell_shares >= 1000";
+        String query = "SELECT sa.username, SUM(sat.shares) AS total_traded_shares " +
+                        "FROM StockAccountTransaction sat " +
+                        "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " +
+                        "WHERE EXTRACT(MONTH FROM sat.transaction_date) = ? " +
+                        "GROUP BY sa.username";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-
-            statement.setInt(1, currentMonth);
-            statement.setInt(2, currentYear);
-
+            statement.setString(1, monthString);
             ResultSet resultSet = statement.executeQuery();
-
             while(resultSet.next()){
-                System.out.println("Customer ID: " + resultSet.getInt("customer_id"));
-                System.out.println("Total Buy Shares: " + resultSet.getString("total_buy_shares"));
-                System.out.println("Total Sell Shares: " + resultSet.getString("total_sell_shares"));
-                System.out.println("--------------------");
+                String username = resultSet.getString("username");
+                float totalShares = resultSet.getFloat("total_traded_shares");
+                customerShares.put(username, totalShares);
             }
-            if(!resultSet.next()){
-                System.out.println("No active customers who have bought and sold 1000 shares found.");
+            //now we have a map of all customers and their total shares traded
+            for(Map.Entry<String, Float> entry : customerShares.entrySet()){
+                if(entry.getValue() >= 1000){
+                    CustomerDAO customerDAO = new CustomerDAOImpl();
+                    Customer customer = customerDAO.getCustomer(entry.getKey());
+                    System.out.println("Customer Name: " + customer.getName());
+                    System.out.println("--------------------");
+                }
             }
         }catch(Exception e){
             System.out.println("ERROR: listing active customers failed.");
@@ -158,69 +239,45 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println(e);
         }
         
+        
     }
     
     public void customerReport(Customer customer){
         //TODO:Generate a list of all accounts associated with a particular customer and the current balance
-        //query the db for all accounts associated with a particular customer and the current balance
-        String query = "SELECT * FROM MarketAccount WHERE username = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
 
-            statement.setString(1, customer.getUsername());
+        String username = customer.getUsername(); //needed for account balances
+        System.out.println("Customer Name: " + customer.getName());
 
-            ResultSet resultSet = statement.executeQuery();
-
-            while(resultSet.next()){
-                System.out.println("Customer Name: " + resultSet.getString("name"));
-                System.out.println("Account Type: Market Account");
-                System.out.println("Balance: " + resultSet.getString("balance"));
-                System.out.println("--------------------");
-                //we can get the stock account if it exists with the same mkta_id
-                String stockAccQuery = "SELECT * FROM StockAccount WHERE mkta_id = ?";
-                PreparedStatement stockAccStatement = connection.prepareStatement(stockAccQuery);
-                stockAccStatement.setInt(1, resultSet.getInt("mkta_id"));
-                ResultSet stockAccResultSet = stockAccStatement.executeQuery();
-                while(stockAccResultSet.next()){
-                    System.out.println("Account Type: Stock Account");
-                    System.out.println("Balance: " + resultSet.getString("balance"));
-                    System.out.println("--------------------");
-                }
-                if(!stockAccResultSet.next()){
-                    System.out.println("No stock account found for this customer.");
-                }
-            }
-            if(!resultSet.next()){
-                System.out.println("No accounts associated with this customer found.");
-            }
-        }catch(Exception e){   
-            System.out.println("ERROR: generating customer report failed.");
-            e.printStackTrace();
-            System.out.println(e);
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+        if(mkta_id == -1){
+            System.out.println("No market account found for this customer.");
+            return;
+        }
+        else{
+            //get the market account balance
+            float marketAccountBalance = marketAccountDAO.getBalance(username);
+            System.out.println("Market Account Balance: " + marketAccountBalance);
+            //now for stock acc
+            System.out.println("Stock Account Balances: ");
+            StockAccountDAOImpl stockAccountDAO = new StockAccountDAOImpl();
+            stockAccountDAO.showAllShares(mkta_id);
         }
     }
     
     public void deleteTransactions(){
         //TODO: Delete the list of transactions from each of the accounts, in preparation for a new month of processing.
         //should just be deleting every transaction 
+        MarketAccountTransactionDAO marketAccountTransactionDAO = new MarketAccountTransactionDAOImpl();
+        boolean marketClear = marketAccountTransactionDAO.clearAllMarketAccountTransactions();
+        if(marketClear){
+            System.out.println("Market account transactions have been cleared.");
+        }
+        StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
+        boolean stockClear = stockAccountTransactionDAO.clearAllTransactions();
 
-        String query = "DELETE FROM MarketAccountTransaction";
-
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.executeUpdate();
-            int rowsAffected = statement.executeUpdate();
-            if(rowsAffected == 0){
-                System.out.println("No transactions to delete.");
-            }else{
-                System.out.println("All transactions have been deleted.");
-            }
-        }catch(Exception e){
-            System.out.println("ERROR: deleting transactions failed.");
-            e.printStackTrace();
-            System.out.println(e);
+        if(stockClear){
+            System.out.println("Stock account transactions have been cleared.");
         }
     
     }
@@ -231,32 +288,39 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         // including earnings from buying/selling stocks and interest. The residence state of each customer should
         // also be listed
         // query the db for all customers who have made more than $10,000 in the last month
-        Calendar calendar = Calendar.getInstance();
-        int currentMonth = calendar.get(Calendar.MONTH);
-        int currentYear = calendar.get(Calendar.YEAR);
-        String query = "SELECT c.customer_id, c.name, c.state, SUM(t.buy_shares) AS total_buy_shares, SUM(t.sell_shares) AS total_sell_shares, SUM(t.buy_shares * t.buy_price) AS total_buy_price, SUM(t.sell_shares * t.sell_price) AS total_sell_price " +
-                       "FROM Trades t " +
-                       "JOIN Customers c ON t.customer_id = c.customer_id " +
-                       "WHERE MONTH(t.trade_date) = ? AND YEAR(t.trade_date) = ? " +
-                       "GROUP BY c.customer_id " +
-                       "HAVING total_buy_price + total_sell_price >= 10000";
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        
+        Map<String, Float> customerEarnings = new HashMap<String, Float>();
+        String query = "SELECT sa.username, SUM(sat.profit) AS total_earnings " + 
+                        "FROM StockAccountTransaction sat " +
+                        "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " + 
+                        "WHERE EXTRACT(MONTH FROM sat.transaction_date) " +
+                        "GROUP BY sa.username";
         
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-            
-            statement.setInt(1, currentMonth);
-            statement.setInt(2, currentYear);
-
+//            statement.setString(1, monthString);
             ResultSet resultSet = statement.executeQuery();
             while(resultSet.next()){
-                System.out.println("Customer ID: " + resultSet.getInt("customer_id"));
-                System.out.println("Customer Name: " + resultSet.getString("name"));
-                System.out.println("Residence State: " + resultSet.getString("state"));
-                System.out.println("--------------------");
+                String username = resultSet.getString("username");
+                float totalEarnings = resultSet.getFloat("total_earnings");
+                customerEarnings.put(username, totalEarnings);
             }
-            if(!resultSet.next()){
-                System.out.println("No customers have made more than $10,000 in the last month.");
+
+            //now we have a map of all customers and their total earnings
+            for(Map.Entry<String, Float> entry : customerEarnings.entrySet()){
+                if(entry.getValue() >= 10000){
+                    CustomerDAO customerDAO = new CustomerDAOImpl();
+                    Customer customer = customerDAO.getCustomer(entry.getKey());
+                    System.out.println("Customer Name: " + customer.getName());
+                    System.out.println("Customer State: " + customer.getState());
+                    System.out.println("--------------------");
+                }
             }
         }catch(Exception e){
             System.out.println("ERROR: generating DTER failed.");
@@ -265,11 +329,21 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         }
         
     }
-    public void openMarket(){
-        //what does this mean
+    public void openMarket(String newDate){
+        // open market on date. set is_open to true, set market_date to date
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        boolean open = sysInfoDAO.openMarket(newDate);
+        if(open){
+            System.out.println("Market has been opened.");
+        }
+        
     }
     public void closeMarket(){
-        //??
+        //set all stock current prices to stock closing prices
+        //then set is_open to false
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        sysInfoDAO.closeMarket();
+
     }
 
     public void setStockPrice(String stockSymbol, float newPrice){
@@ -280,7 +354,11 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     }
 
     public void setCurrentDate(String newDate){
-        //TODO: figure out how we are storing the date in our system
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        boolean date = sysInfoDAO.setDate(newDate);
+        if(date){
+            System.out.println("Date has been updated.");
+        }
     }
 
     public void main(String[] args) {
@@ -313,14 +391,13 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         System.out.println("4. Generate DTER");
         System.out.println("5. Customer Report");
         System.out.println("6. Delete Transactions");
-        System.out.println("Test, Debug, Demo Operations:")
-        System.out.println("7. Open market for the day");
-        System.out.println("8. Close market for the day");
-        System.out.println("9. Set a new price for the stock")
-        System.out.println("10. Set current date");
-        System.out.println("11. Exit");
+        System.out.println("Test, Debug, Demo Operations:");
+        System.out.println("7. Open market");
+        System.out.println("8. Close market");
+        System.out.println("9. Set a new price for the stock");
+        System.out.println("10. Exit");
         int choice = scanner2.nextInt();
-        while(choice != 11){
+        while(choice != 10){
             switch(choice){
                 case 1:
                     System.out.println("Enter the interest rate as a decimal: ");
@@ -347,24 +424,24 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                     break;
                 case 6:
                     System.out.println("Deleting all transactions...");
-                    manager.deleteTransactions();
+                    deleteTransactions();
                     break;
                 case 7:
-                    System.out.println("Opening market for the day...");
+                    System.out.println("What day would you like to open the market for?");
+                    String newDate = scanner2.nextLine();
+                    openMarket(newDate);
                     break;
                 case 8:
-                    System.out.println("Closing market for the day...");
+                    System.out.println("Closing market...");
+                    closeMarket();
                     break;
                 case 9:
-                    System.out.println("Enter the new price for the stock: ");
-                    float newPrice = scanner2.nextFloat();
                     System.out.println("Enter the stock symbol: ");
                     String stockSymbol = scanner2.nextLine();
+                    System.out.println("Enter the new price for the stock: ");
+                    float newPrice = scanner2.nextFloat();
+                    
                     setStockPrice(stockSymbol, newPrice);
-                    break;
-                case 10:
-                    System.out.println("Enter the new date: ");
-                    String newDate = scanner2.nextLine();
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -377,16 +454,15 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println("4. Generate DTER");
             System.out.println("5. Customer Report");
             System.out.println("6. Delete Transactions");
-            System.out.println("Test, Debug, Demo Operations:")
+            System.out.println("Test, Debug, Demo Operations:");
             System.out.println("7. Open market for the day");
             System.out.println("8. Close market for the day");
-            System.out.println("9. Set a new price for the stock")
-            System.out.println("10. Set current date");
-            System.out.println("11. Exit");
+            System.out.println("9. Set a new price for the stock");
+            System.out.println("10. Exit");
             choice = scanner.nextInt();
         }
         System.out.println("Goodbye!");
-        //close scanner when 11 is selected
+        //close scanner when 10 is selected
         scanner.close();
         scanner2.close();
 

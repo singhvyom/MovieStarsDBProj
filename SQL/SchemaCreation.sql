@@ -32,6 +32,20 @@ INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES
 
 Commit;
 
+CREATE TABLE Admin
+(
+    name varchar2(20),
+    state varchar2(2),
+    phone varchar2(15),
+    email varchar2(30),
+    tax_id varchar2(9),
+    username varchar2(20),
+    passwd varchar2(20),
+    PRIMARY KEY (username),
+    --CONSTRAINT c_unique_phone UNIQUE (phone),
+    CONSTRAINT c_unique_email UNIQUE (email)
+);
+
 DROP TABLE MarketAccount;
 
 CREATE TABLE MarketAccount
@@ -158,4 +172,20 @@ CREATE TABLE StockAccountTransaction
 
 INSERT INTO StockAccountTransaction(stock, mkta_id, shares, type, transaction_date, profit)VALUES ('AFH', 001, 100, 'BUY', '01-JAN-2018', 0);
 
+CREATE TABLE SysInfo
+(
+    market_date date,
+    is_open number(1),
+    PRIMARY KEY (market_date)
+);
+
 Commit;
+
+CREATE TABLE DailyStockPrice
+(
+    stock varchar2(3),
+    day date,
+    closing_price float,
+    PRIMARY KEY (stock, day),
+    FOREIGN KEY (stock) REFERENCES ActorProfileStock(stock_symbol)
+);

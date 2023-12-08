@@ -13,23 +13,23 @@ public class MarketAccountTransactionDAOImpl implements MarketAccountTransaction
 
     public static void main(String[] args) {
         MarketAccountTransactionDAO marketAccountTransactionDAO = new MarketAccountTransactionDAOImpl();
-        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(1, 100, "deposit", "2020-12-12");
+        MarketAccountTransaction marketAccountTransaction = new MarketAccountTransaction(1, 100, "deposit");
 
 //        marketAccountTransactionDAO.createMarketAccountTransaction(marketAccountTransaction);
-//        marketAccountTransactionDAO.cancelMarketAccountTransaction(1);
-        marketAccountTransactionDAO.clearAllMarketAccountTransactions();
+        MarketAccountTransaction m = marketAccountTransactionDAO.cancelMarketAccountTransaction(1);
+        System.out.println(m.getMkta_id());
+//        marketAccountTransactionDAO.clearAllMarketAccountTransactions();
     }
 
     @Override
     public boolean createMarketAccountTransaction(MarketAccountTransaction marketAccountTransaction) {
-        String query = "INSERT INTO MarketAccountTransaction(mkta_id, amount, type, transaction_date)VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO MarketAccountTransaction(mkta_id, amount, type, transaction_date)VALUES (?, ?, ?, (SELECT market_date FROM SysInfo))";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setInt(1, marketAccountTransaction.getMkta_id());
             statement.setFloat(2, marketAccountTransaction.getAmount());
             statement.setString(3, marketAccountTransaction.getType());
-            statement.setDate(4, java.sql.Date.valueOf(marketAccountTransaction.getDate()));
             statement.executeUpdate();
             return true;
         } catch (Exception e) {
@@ -42,8 +42,10 @@ public class MarketAccountTransactionDAOImpl implements MarketAccountTransaction
 
     @Override
     public MarketAccountTransaction cancelMarketAccountTransaction(int mkta_id) {
-        String selectQuery = "SELECT * FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from marketaccounttransaction WHERE mkta_id = ?)";
-        String deleteQuery = "DELETE FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from marketaccounttransaction WHERE mkta_id = ?)";
+        String selectQuery = "SELECT * FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from " +
+                "marketaccounttransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo) AND type <> 'commission')";
+        String deleteQuery = "DELETE FROM MarketAccountTransaction where transaction_id = (select max(transaction_id) from " +
+                "marketaccounttransaction WHERE mkta_id = ? AND transaction_date = (SELECT market_date FROM SysInfo) AND type <> 'commission')";
         try {
             Connection connection = DbConnection.getConnection();
             PreparedStatement selectStatement = connection.prepareStatement(selectQuery);

@@ -6,16 +6,19 @@ public class StockAccountTransaction {
     private int mkta_id;
     private float shares;
     private String type;
-    private String date;
     private float profit;
 
-    public StockAccountTransaction(String stock, int mkta_id, float shares, String type, String date, float profit) {
+    public StockAccountTransaction(String stock, int mkta_id, float shares, String type, float profit) {
         this.stock = stock;
         this.mkta_id = mkta_id;
         this.shares = shares;
         this.type = type;
-        this.date = date;
         this.profit = profit;
+    }
+
+    @Override
+    public String toString() {
+        return "Stock: " + stock + ", shares: " + shares + ",transaction type: " + type + ", profit: " + profit;
     }
 
     public StockAccountTransaction() {}
@@ -50,14 +53,6 @@ public class StockAccountTransaction {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
     }
 
     public float getProfit() {
