@@ -12,9 +12,9 @@ public interface TraderInterfaceDAO {
     public void cancelMarketTransaction(String username);
     public void cancelStockTransaction(String username);
     public void showMarketAccountBalance(String username);
-    public void showTransactionHistory();
+    public void showTransactionHistory(String username);
     public void getCurrentStockPrice(String stockSymbol);
-    public void showActorProfile(String actorName);
+    public void showActorProfile(String stockSymbol);
     public void showMovieInformation(String movieTitle, int year, Scanner scanner);
     
     

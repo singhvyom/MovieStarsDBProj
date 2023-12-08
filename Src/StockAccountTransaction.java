@@ -16,6 +16,11 @@ public class StockAccountTransaction {
         this.profit = profit;
     }
 
+    @Override
+    public String toString() {
+        return "Stock: " + stock + ", shares: " + shares + ",transaction type: " + type + ", profit: " + profit;
+    }
+
     public StockAccountTransaction() {}
 
     public String getStock() {

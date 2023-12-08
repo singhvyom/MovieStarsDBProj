@@ -77,7 +77,11 @@ public class StockAccountDAOImpl implements StockAccountDAO {
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, stock);
             statement.setInt(2, mkta_id);
-            return statement.executeQuery().getFloat("shares_owned");
+            ResultSet resultSet = statement.executeQuery();
+            while(resultSet.next()) {
+                return resultSet.getFloat("shares_owned");
+            }
+
         } catch (Exception e) {
             System.out.println("ERROR: stock account check failed.");
             e.printStackTrace();
