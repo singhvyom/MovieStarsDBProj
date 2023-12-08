@@ -23,36 +23,29 @@ import java.util.HashMap;
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
     public boolean login(String username, String password) {
-        //TODO: check if the username and password are correct
-        // query the db for the username and password
-        // String query = "SELECT * FROM Customer WHERE username = " + username + " AND password = " + password;
-        // try{
-        //     Connection connection = DbConnection.getConnection();
-        //     PreparedStatement statement = connection.prepareStatement(query);
+    
+        String query = "SELECT * FROM Admin WHERE username = " + username + " AND passwd = " + password;
+        try{
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
             
-        //     statement.setString(1, username);
-        //     statement.setString(2, password);
-        //     ResultSet resultSet = statement.executeQuery();
-        //     if(resultSet.next()){
-        //         return true;
-        //     }
-        //     else{
-        //         return false;
-        //     }
+            statement.setString(1, username);
+            statement.setString(2, password);
+            ResultSet resultSet = statement.executeQuery();
+            if(resultSet.next()){
+                return true;
+            }
+            else{
+                return false;
+            }
 
-        // }catch(Exception e){
-        //     System.out.println("ERROR: login failed.");
-        //     e.printStackTrace();
-        //     System.out.println(e);
-        // }
-        // return false;
-        CustomerDAO customerDAO = new CustomerDAOImpl();
-        String customerName = customerDAO.login(username, password);
-        if(customerName == null){
-            System.out.println("Login failed.");
-            return false;
+        }catch(Exception e){
+            System.out.println("ERROR: login failed.");
+            e.printStackTrace();
+            System.out.println(e);
         }
-        return true;
+        return false;
+       
         
     }
     public void addInterest(float interestRate) {
