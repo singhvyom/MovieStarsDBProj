@@ -19,6 +19,8 @@ import Src.DAOImpl.MarketAccountTransactionDAOImpl;
 import Src.DAO.StockAccountTransactionDAO;
 import Src.DAOImpl.StockAccountTransactionDAOImpl;
 import Src.DAO.MarketAccountDAO;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
@@ -51,9 +53,11 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         // TODO: For all market accounts, add the appropriate amount of monthly interest to the balance.
         // This can only be done at the last business day of a month.
         // manager gets to set the interest rate
-        Calendar calendar = Calendar.getInstance();
-        int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
-        int lastDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int currentDay = date.getDayOfMonth();
+        int lastDay = date.lengthOfMonth();
         if(currentDay != lastDay){
             System.out.println("ERROR: cannot add interest until the last day of the month.");
             return;
@@ -132,38 +136,45 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         //TODO: Generate a list of all customers who have traded (buy or sell) at least 1,000 shares in the current month
         //need to sum up the number of shares bought and sold for each customer
         //query the db for all customers who have traded at least 1,000 shares in the current month
+        SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
+        String marketDate = sysInfoDAO.getMarketDate();
+        LocalDate date = LocalDate.parse(marketDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        int month = date.getMonthValue();
+        String monthString = String.valueOf(month);
+        //now for every customer, sum up numbrt of 'shares' for every
+        //stock market transaction. display names if sum is greater than 1000
+        Map<String, Float> customerShares = new HashMap<String, Float>();
 
-        Calendar calendar = Calendar.getInstance(); 
-        int currentMonth = calendar.get(Calendar.MONTH);
-        int currentYear = calendar.get(Calendar.YEAR);
-        String query = "SELECT customer_id, SUM(buy_shares) AS total_buy_shares, SUM(sell_shares) AS total_sell_shares " +
-                       "FROM Trades " +
-                       "WHERE MONTH(trade_date) = ? AND YEAR(trade_date) = ? " +
-                       "GROUP BY customer_id " +
-                       "HAVING total_buy_shares + total_sell_shares >= 1000";
+        String query = "SELECT sa.username, SUM(sat.shares) AS total_traded_shares " +
+                        "FROM StockAccountTransaction sat " +
+                        "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " +
+                        "WHERE EXTRACT(MONTH FROM sat.transaction_date) = ? " +
+                        "GROUP BY sa.username"
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-
-            statement.setInt(1, currentMonth);
-            statement.setInt(2, currentYear);
-
+            statement.setString(1, monthString);
             ResultSet resultSet = statement.executeQuery();
-
             while(resultSet.next()){
-                System.out.println("Customer ID: " + resultSet.getInt("customer_id"));
-                System.out.println("Total Buy Shares: " + resultSet.getString("total_buy_shares"));
-                System.out.println("Total Sell Shares: " + resultSet.getString("total_sell_shares"));
-                System.out.println("--------------------");
+                String username = resultSet.getString("username");
+                float totalShares = resultSet.getFloat("total_traded_shares");
+                customerShares.put(username, totalShares);
             }
-            if(!resultSet.next()){
-                System.out.println("No active customers who have bought and sold 1000 shares found.");
+            //now we have a map of all customers and their total shares traded
+            for(Map.Entry<String, Float> entry : customerShares.entrySet()){
+                if(entry.getValue() >= 1000){
+                    CustomerDAO customerDAO = new CustomerDAOImpl();
+                    Customer customer = customerDAO.getCustomer(entry.getKey());
+                    System.out.println("Customer Name: " + customer.getName());
+                    System.out.println("--------------------");
+                }
             }
         }catch(Exception e){
             System.out.println("ERROR: listing active customers failed.");
             e.printStackTrace();
             System.out.println(e);
         }
+        
         
     }
     
@@ -195,9 +206,16 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         //TODO: Delete the list of transactions from each of the accounts, in preparation for a new month of processing.
         //should just be deleting every transaction 
         MarketAccountTransactionDAO marketAccountTransactionDAO = new MarketAccountTransactionDAOImpl();
-        marketAccountTransactionDAO.clearAllMarketAccountTransactions();
+        boolean marketClear = marketAccountTransactionDAO.clearAllMarketAccountTransactions();
+        if(marketClear){
+            System.out.println("Market account transactions have been cleared.");
+        }
         StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
-        stockAccountTransactionDAO.clearAllTransactions();
+        boolean stockClear = stockAccountTransactionDAO.clearAllTransactions();
+
+        if(stockClear){
+            System.out.println("Stock account transactions have been cleared.");
+        }
     
     }
 
@@ -350,10 +368,11 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                     closeMarket();
                     break;
                 case 9:
-                    System.out.println("Enter the new price for the stock: ");
-                    float newPrice = scanner2.nextFloat();
                     System.out.println("Enter the stock symbol: ");
                     String stockSymbol = scanner2.nextLine();
+                    System.out.println("Enter the new price for the stock: ");
+                    float newPrice = scanner2.nextFloat();
+                    
                     setStockPrice(stockSymbol, newPrice);
                     break;
                 default:
