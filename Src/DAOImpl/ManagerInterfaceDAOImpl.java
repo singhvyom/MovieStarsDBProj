@@ -21,6 +21,7 @@ import Src.DAOImpl.StockAccountTransactionDAOImpl;
 import Src.DAO.MarketAccountDAO;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
@@ -181,6 +182,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println("Shares: " + shares);
             System.out.println("Type: " + type);
             System.out.println("Date: " + date);
+            System.out,println("--------------------");
         }
 
         //now to get total amount of commission
