@@ -32,6 +32,20 @@ INSERT INTO Customer(name, username, passwd, state, phone, email, tax_id) VALUES
 
 Commit;
 
+CREATE TABLE Admin
+(
+    name varchar2(20),
+    state varchar2(2),
+    phone varchar2(15),
+    email varchar2(30),
+    tax_id varchar2(9),
+    username varchar2(20),
+    passwd varchar2(20),
+    PRIMARY KEY (username),
+    --CONSTRAINT c_unique_phone UNIQUE (phone),
+    CONSTRAINT c_unique_email UNIQUE (email)
+);
+
 DROP TABLE MarketAccount;
 
 CREATE TABLE MarketAccount
