@@ -1,23 +1,20 @@
 package Src.DAOImpl;
 import Src.DAO.CustomerDAO;
-import Src.DAOImpl.CustomerDAOImpl;
 import Src.DAO.ManagerInterfaceDAO;
 import Src.Customer;
+
+import java.util.Map;
 import java.util.Scanner;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Calendar;
+
 import Src.DbConnection;
 import Src.ActorProfileStock;
 import Src.DAO.ActorProfileStockDAO;
-import Src.DAOImpl.ActorProfileStockDAOImpl;
 import Src.DAO.SysInfoDAO;
-import Src.DAOImpl.SysInfoDAOImpl;
 import Src.DAO.MarketAccountTransactionDAO;
-import Src.DAOImpl.MarketAccountTransactionDAOImpl;
 import Src.DAO.StockAccountTransactionDAO;
-import Src.DAOImpl.StockAccountTransactionDAOImpl;
 import Src.DAO.MarketAccountDAO;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -101,6 +98,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             e.printStackTrace();
             System.out.println(e);
         }
+        return null;
     }
 
     private ResultSet getStockAccountTransactions(String username){
@@ -125,6 +123,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             e.printStackTrace();
             System.out.println(e);
         }
+        return null;
     }
 
     public void generateMonthlyStatement(Customer customer) {
@@ -158,32 +157,40 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
 
         //then get the total amount of commissions paid
         //then list each transaction (id, amount, type)
-        ResultSet marketAccountTransactions = getMarketAccountTransactions(username);
-        while(marketAccountTransactions.next()){
-            int transaction_id = marketAccountTransactions.getInt("transaction_id");
-            float amount = marketAccountTransactions.getFloat("amount");
-            String type = marketAccountTransactions.getString("type");
-            System.out.println("Transaction ID: " + transaction_id);
-            System.out.println("Amount: " + amount);
-            System.out.println("Type: " + type);
+        try (ResultSet marketAccountTransactions = getMarketAccountTransactions(username)) {
+            while (marketAccountTransactions.next()) {
+                int transaction_id = marketAccountTransactions.getInt("transaction_id");
+                float amount = marketAccountTransactions.getFloat("amount");
+                String type = marketAccountTransactions.getString("type");
+                System.out.println("Transaction ID: " + transaction_id);
+                System.out.println("Amount: " + amount);
+                System.out.println("Type: " + type);
+            }
+
+            ResultSet stockAccountTransactions = getStockAccountTransactions(username);
+            while(stockAccountTransactions.next()){
+                int transaction_id = stockAccountTransactions.getInt("transaction_id");
+                float shares = stockAccountTransactions.getFloat("shares");
+                String stock = stockAccountTransactions.getString("stock");
+                String type = stockAccountTransactions.getString("type");
+                String transactionDate = stockAccountTransactions.getString("transaction_date");
+                System.out.println("Transaction ID: " + transaction_id);
+                System.out.println("Stock: " + stock);
+                System.out.println("Shares: " + shares);
+                System.out.println("Type: " + type);
+                System.out.println("Date: " + transactionDate);
+                System.out.println("--------------------");
+            }
+
+        } catch (Exception e) {
+            System.out.println("ERROR: listing market account transactions failed.");
+            e.printStackTrace();
+            System.out.println(e);
         }
 
         //now show the tranasctions for each stock account
 
-        ResultSet stockAccountTransactions = getStockAccountTransactions(username);
-        while(stockAccountTransactions.next()){
-            int transaction_id = stockAccountTransactions.getInt("transaction_id");
-            float shares = stockAccountTransactions.getFloat("shares");
-            String stock = stockAccountTransactions.getString("stock");
-            String type = stockAccountTransactions.getString("type");
-            String date = stockAccountTransactions.getString("transaction_date");
-            System.out.println("Transaction ID: " + transaction_id);
-            System.out.println("Stock: " + stock);
-            System.out.println("Shares: " + shares);
-            System.out.println("Type: " + type);
-            System.out.println("Date: " + date);
-            System.out,println("--------------------");
-        }
+
 
         //now to get total amount of commission
 
@@ -206,7 +213,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                         "FROM StockAccountTransaction sat " +
                         "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " +
                         "WHERE EXTRACT(MONTH FROM sat.transaction_date) = ? " +
-                        "GROUP BY sa.username"
+                        "GROUP BY sa.username";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -292,12 +299,12 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                         "FROM StockAccountTransaction sat " +
                         "JOIN StockAccount sa ON sat.stock = sa.stock AND sat.mkta_id = sa.mkta_id " + 
                         "WHERE EXTRACT(MONTH FROM sat.transaction_date) " +
-                        "GROUP BY sa.username"
+                        "GROUP BY sa.username";
         
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, monthString);
+//            statement.setString(1, monthString);
             ResultSet resultSet = statement.executeQuery();
             while(resultSet.next()){
                 String username = resultSet.getString("username");
