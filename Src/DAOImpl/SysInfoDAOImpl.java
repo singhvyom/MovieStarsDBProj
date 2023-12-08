@@ -46,7 +46,8 @@ public class SysInfoDAOImpl implements SysInfoDAO {
     @Override
     public boolean closeMarket() {
         //set all closing prices for each stock to current price
-        String query = "UPDATE ActorProfileStock SET closing_price = current_price";
+        String query = "INSERT INTO DailyStockPrice(stock_symbol, stock_price_date, closing_price) SELECT " +
+                "aps.stock_symbol, si.market_date, aps.current_price FROM actorprofilestock aps, sysinfo si;";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
