@@ -5,6 +5,7 @@ import Src.DbConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class StockAccountDAOImpl implements StockAccountDAO {
 
@@ -83,5 +84,25 @@ public class StockAccountDAOImpl implements StockAccountDAO {
             System.out.println(e);
         }
         return -1;
+    }
+
+    @Override
+    public void showAllShares(int mkta_id) {
+        String query = "SELECT * FROM StockAccount WHERE mkta_id = ?";
+        try {
+            Connection connection = DbConnection.getConnection();
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, mkta_id);
+            ResultSet resultSet = statement.executeQuery();
+            while(resultSet.next()) {
+                String stock = resultSet.getString("stock");
+                float shares = resultSet.getFloat("shares");
+                System.out.println(stock + ": " + shares);
+            }
+        } catch (Exception e) {
+            System.out.println("ERROR: stock account check failed.");
+            e.printStackTrace();
+            System.out.println(e);
+        }
     }
 }

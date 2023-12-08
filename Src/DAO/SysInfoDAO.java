@@ -15,5 +15,5 @@ public interface SysInfoDAO {
     //or we do impl in here but better done in manager interface
     String getMarketDate();
 
-    }
+    
 }

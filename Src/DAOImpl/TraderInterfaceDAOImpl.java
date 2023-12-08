@@ -244,7 +244,7 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
         }
         System.out.println();
         
-        System.out.println("Would you like to see the top movies in this time interval? (y/n)");
+        System.out.println("Would you like to see the top movies in a given time interval? (y/n)");
         Scanner scanner = new Scanner(System.in);
         String choice = scanner.nextLine();
         if(choice.equals("y")){
@@ -257,6 +257,9 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             for(Movie m : movies) {
                 System.out.println(m.getTitle());
             }
+            if(movies.size() == 0){
+                System.out.println("No movies found in that time interval.");
+            }
         }
         System.out.println("Would you like to see the reviews for this movie? (y/n)");
         String choice2 = scanner.nextLine();
@@ -264,6 +267,9 @@ public class TraderInterfaceDAOImpl implements TraderInterfaceDAO {
             ArrayList<String> reviews = movieDAO.getAllMovieReviews(movie);
             for(String review : reviews) {
                 System.out.println(review);
+            }
+            if(reviews.size() == 0){
+                System.out.println("No reviews found for this movie.");
             }
         }
 

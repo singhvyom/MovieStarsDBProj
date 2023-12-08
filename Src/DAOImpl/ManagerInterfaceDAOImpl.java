@@ -14,6 +14,11 @@ import Src.DAO.ActorProfileStockDAO;
 import Src.DAOImpl.ActorProfileStockDAOImpl;
 import Src.DAO.SysInfoDAO;
 import Src.DAOImpl.SysInfoDAOImpl;
+import Src.DAO.MarketAccountTransactionDAO;
+import Src.DAOImpl.MarketAccountTransactionDAOImpl;
+import Src.DAO.StockAccountTransactionDAO;
+import Src.DAOImpl.StockAccountTransactionDAOImpl;
+import Src.DAO.MarketAccountDAO;
 
 public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
@@ -164,66 +169,35 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     
     public void customerReport(Customer customer){
         //TODO:Generate a list of all accounts associated with a particular customer and the current balance
-        //query the db for all accounts associated with a particular customer and the current balance
-        String query = "SELECT * FROM MarketAccount WHERE username = ?";
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
 
-            statement.setString(1, customer.getUsername());
+        String username = customer.getUsername(); //needed for account balances
+        System.out.println("Customer Name: " + customer.getName());
 
-            ResultSet resultSet = statement.executeQuery();
-
-            while(resultSet.next()){
-                System.out.println("Customer Name: " + resultSet.getString("name"));
-                System.out.println("Account Type: Market Account");
-                System.out.println("Balance: " + resultSet.getString("balance"));
-                System.out.println("--------------------");
-                //we can get the stock account if it exists with the same mkta_id
-                String stockAccQuery = "SELECT * FROM StockAccount WHERE mkta_id = ?";
-                PreparedStatement stockAccStatement = connection.prepareStatement(stockAccQuery);
-                stockAccStatement.setInt(1, resultSet.getInt("mkta_id"));
-                ResultSet stockAccResultSet = stockAccStatement.executeQuery();
-                while(stockAccResultSet.next()){
-                    System.out.println("Account Type: Stock Account");
-                    System.out.println("Balance: " + resultSet.getString("balance"));
-                    System.out.println("--------------------");
-                }
-                if(!stockAccResultSet.next()){
-                    System.out.println("No stock account found for this customer.");
-                }
-            }
-            if(!resultSet.next()){
-                System.out.println("No accounts associated with this customer found.");
-            }
-        }catch(Exception e){   
-            System.out.println("ERROR: generating customer report failed.");
-            e.printStackTrace();
-            System.out.println(e);
+        MarketAccountDAO marketAccountDAO = new MarketAccountDAOImpl();
+        int mkta_id = marketAccountDAO.getMarketAccountId(username);
+        if(mkta_id == -1){
+            System.out.println("No market account found for this customer.");
         }
+        else{
+            //get the market account balance
+            float marketAccountBalance = marketAccountDAO.getBalance(username);
+            System.out.println("Market Account Balance: " + marketAccountBalance);
+        }
+        //now for stock acc
+        System.out.println("Stock Account Balances: ");
+        StockAccountDAOImpl stockAccountDAO = new StockAccountDAOImpl();
+        stockAccountDAO.showAllShares(mkta_id);
+        
+        
     }
     
     public void deleteTransactions(){
         //TODO: Delete the list of transactions from each of the accounts, in preparation for a new month of processing.
         //should just be deleting every transaction 
-
-        String query = "DELETE FROM MarketAccountTransaction";
-
-        try{
-            Connection connection = DbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.executeUpdate();
-            int rowsAffected = statement.executeUpdate();
-            if(rowsAffected == 0){
-                System.out.println("No transactions to delete.");
-            }else{
-                System.out.println("All transactions have been deleted.");
-            }
-        }catch(Exception e){
-            System.out.println("ERROR: deleting transactions failed.");
-            e.printStackTrace();
-            System.out.println(e);
-        }
+        MarketAccountTransactionDAO marketAccountTransactionDAO = new MarketAccountTransactionDAOImpl();
+        marketAccountTransactionDAO.clearAllMarketAccountTransactions();
+        StockAccountTransactionDAO stockAccountTransactionDAO = new StockAccountTransactionDAOImpl();
+        stockAccountTransactionDAO.clearAllTransactions();
     
     }
 
@@ -279,10 +253,8 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         
     }
     public void closeMarket(){
-        //??
         //set all stock current prices to stock closing prices
         //then set is_open to false
-        //should be a trigger operation or manual
         SysInfoDAO sysInfoDAO = new SysInfoDAOImpl();
         sysInfoDAO.closeMarket();
 
@@ -334,13 +306,12 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
         System.out.println("5. Customer Report");
         System.out.println("6. Delete Transactions");
         System.out.println("Test, Debug, Demo Operations:");
-        System.out.println("7. Open market for the day");
-        System.out.println("8. Close market for the day");
+        System.out.println("7. Open market");
+        System.out.println("8. Close market");
         System.out.println("9. Set a new price for the stock");
-        System.out.println("10. Set current date");
-        System.out.println("11. Exit");
+        System.out.println("10. Exit");
         int choice = scanner2.nextInt();
-        while(choice != 11){
+        while(choice != 10){
             switch(choice){
                 case 1:
                     System.out.println("Enter the interest rate as a decimal: ");
@@ -370,10 +341,13 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                     deleteTransactions();
                     break;
                 case 7:
-                    System.out.println("Opening market for the day...");
+                    System.out.println("What day would you like to open the market for?");
+                    String newDate = scanner2.nextLine();
+                    openMarket(newDate);
                     break;
                 case 8:
-                    System.out.println("Closing market for the day...");
+                    System.out.println("Closing market...");
+                    closeMarket();
                     break;
                 case 9:
                     System.out.println("Enter the new price for the stock: ");
@@ -381,10 +355,6 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
                     System.out.println("Enter the stock symbol: ");
                     String stockSymbol = scanner2.nextLine();
                     setStockPrice(stockSymbol, newPrice);
-                    break;
-                case 10:
-                    System.out.println("Enter the new date: ");
-                    String newDate = scanner2.nextLine();
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -401,12 +371,11 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
             System.out.println("7. Open market for the day");
             System.out.println("8. Close market for the day");
             System.out.println("9. Set a new price for the stock");
-            System.out.println("10. Set current date");
-            System.out.println("11. Exit");
+            System.out.println("10. Exit");
             choice = scanner.nextInt();
         }
         System.out.println("Goodbye!");
-        //close scanner when 11 is selected
+        //close scanner when 10 is selected
         scanner.close();
         scanner2.close();
 
