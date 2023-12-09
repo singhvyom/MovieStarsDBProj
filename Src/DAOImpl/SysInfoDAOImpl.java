@@ -6,6 +6,8 @@ import Src.DbConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class SysInfoDAOImpl implements SysInfoDAO {
     @Override
@@ -27,11 +29,15 @@ public class SysInfoDAOImpl implements SysInfoDAO {
 
     @Override
     public boolean openMarket(String newDate) {
-        String query = "UPDATE SysInfo SET is_open = 0 SET market_date = ?";
+        String query = "UPDATE SysInfo SET is_open = 0, market_date = ?";
         try{
+            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            Date parsedDate = sdf.parse(newDate);
+            java.sql.Timestamp sqlTimestamp = new java.sql.Timestamp(parsedDate.getTime());
+
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setDate(1, java.sql.Date.valueOf(newDate));
+            statement.setTimestamp(1, sqlTimestamp);
             statement.executeUpdate();
             System.out.println("Market has been opened.");
             return true;
@@ -47,7 +53,7 @@ public class SysInfoDAOImpl implements SysInfoDAO {
     public boolean closeMarket() {
         //set all closing prices for each stock to current price
         String query = "INSERT INTO DailyStockPrice(stock_symbol, stock_price_date, closing_price) SELECT " +
-                "aps.stock_symbol, si.market_date, aps.current_price FROM actorprofilestock aps, sysinfo si;";
+                "aps.stock_symbol, si.market_date, aps.current_price FROM actorprofilestock aps, sysinfo si";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);

@@ -24,7 +24,7 @@ public class ManagerInterfaceDAOImpl implements ManagerInterfaceDAO{
     // functions for the manager interface
     public boolean login(String username, String password) {
     
-        String query = "SELECT * FROM Admin WHERE username = " + username + " AND passwd = " + password;
+        String query = "SELECT username FROM Admin WHERE username = ? AND passwd = ?";
         try{
             Connection connection = DbConnection.getConnection();
             PreparedStatement statement = connection.prepareStatement(query);
